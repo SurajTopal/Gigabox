@@ -27,37 +27,56 @@ export const styles = StyleSheet.create({
     color: COLORS.text,
     marginBottom: 16,
   },
-  categoryItem: {
-    flexDirection: 'row',
+  categoriesList: {
+    paddingHorizontal: 6,
+  },
+  categoryCard: {
+    flex: 1,
+    backgroundColor: 'white',
+    borderRadius: 8,
+    padding: 16,
     alignItems: 'center',
-    backgroundColor: COLORS.background,
+    margin: 6,
     borderWidth: 1,
     borderColor: COLORS.border,
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    marginBottom: 12,
   },
   categoryIcon: {
-    fontSize: 28,
-    marginRight: 16,
-  },
-  categoryDetails: {
-    flex: 1,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: COLORS.border,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
   },
   categoryName: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: COLORS.text,
+    textAlign: 'center',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 12,
+  },
+  loadingText: {
+    fontSize: 14,
+    color: '#999',
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  emptyIcon: {
+    fontSize: 48,
+    marginBottom: 12,
+  },
+  emptyText: {
     fontSize: 16,
     fontWeight: '600',
     color: COLORS.text,
-  },
-  categoryCount: {
-    fontSize: 12,
-    color: COLORS.textSecondary,
-    marginTop: 2,
-  },
-  arrow: {
-    fontSize: 24,
-    color: COLORS.textSecondary,
   },
   footer: {
     height: 20,

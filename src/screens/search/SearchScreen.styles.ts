@@ -16,7 +16,7 @@ export const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: COLORS.accent,
   },
-  searchContainer: {
+  searchInputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
@@ -24,6 +24,10 @@ export const styles = StyleSheet.create({
     gap: 8,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
+  },
+  searchIconLeft: {
+    fontSize: 18,
+    color: '#666',
   },
   searchInput: {
     flex: 1,
@@ -34,50 +38,28 @@ export const styles = StyleSheet.create({
     fontSize: 14,
     color: COLORS.text,
   },
-  searchButton: {
-    padding: 10,
+  clearButton: {
+    padding: 8,
   },
-  searchIcon: {
-    fontSize: 18,
+  clearIcon: {
+    fontSize: 16,
+    color: '#999',
   },
-  content: {
-    flex: 1,
+  resultsList: {
     paddingHorizontal: 16,
-    paddingTop: 16,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: COLORS.text,
-    marginBottom: 12,
-  },
-  searchItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
     paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
   },
-  searchItemIcon: {
-    fontSize: 16,
-    marginRight: 12,
-  },
-  searchItemText: {
-    fontSize: 14,
-    color: COLORS.text,
-    fontWeight: '500',
-  },
-  productCard: {
+  resultItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.background,
+    backgroundColor: 'white',
     borderWidth: 1,
     borderColor: COLORS.border,
     borderRadius: 8,
     padding: 12,
     marginBottom: 12,
   },
-  productImage: {
+  resultImage: {
     width: 80,
     height: 80,
     backgroundColor: COLORS.border,
@@ -86,32 +68,95 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     marginRight: 12,
   },
-  productImageEmoji: {
-    fontSize: 32,
-  },
-  productInfo: {
+  resultInfo: {
     flex: 1,
   },
-  productName: {
+  resultTitle: {
     fontSize: 14,
     fontWeight: '600',
     color: COLORS.text,
   },
-  productPrice: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: COLORS.primary,
+  resultCategory: {
+    fontSize: 12,
+    color: '#999',
     marginTop: 4,
   },
-  searchResultsTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: COLORS.text,
+  resultFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 6,
+  },
+  resultPrice: {
+    fontSize: 13,
+    fontWeight: 'bold',
+    color: COLORS.primary,
+  },
+  resultDiscount: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#dc2626',
+    backgroundColor: '#fce7f3',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 3,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+  },
+  emptyIcon: {
+    fontSize: 64,
     marginBottom: 16,
   },
-  noResults: {
+  emptyText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: COLORS.text,
+    marginBottom: 4,
+  },
+  emptySubtext: {
+    fontSize: 14,
+    color: '#999',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 40,
+    gap: 12,
+  },
+  loadingText: {
+    fontSize: 14,
+    color: '#999',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+  },
+  errorIcon: {
+    fontSize: 48,
+    marginBottom: 12,
+  },
+  errorText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#dc2626',
+    marginBottom: 4,
+    textAlign: 'center',
+  },
+  errorSubtext: {
+    fontSize: 12,
+    color: '#999',
+  },
+  noResultsContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 16,
   },
   noResultsIcon: {
     fontSize: 48,
@@ -125,9 +170,16 @@ export const styles = StyleSheet.create({
   },
   noResultsSubtext: {
     fontSize: 12,
-    color: COLORS.textSecondary,
+    color: '#999',
   },
-  footer: {
-    height: 20,
+  searchingOverlay: {
+    position: 'absolute',
+    bottom: 20,
+    right: 20,
+    backgroundColor: 'white',
+    borderRadius: 8,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: COLORS.border,
   },
 });

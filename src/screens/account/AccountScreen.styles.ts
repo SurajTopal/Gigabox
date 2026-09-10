@@ -89,14 +89,14 @@ export const styles = StyleSheet.create({
     fontSize: 24,
     color: COLORS.textSecondary,
   },
-  logoutButton: {
+  authButton: {
     marginTop: 24,
     paddingVertical: 12,
     backgroundColor: COLORS.primary,
     borderRadius: 8,
     alignItems: 'center',
   },
-  logoutText: {
+  authText: {
     fontSize: 16,
     fontWeight: '600',
     color: COLORS.accent,
