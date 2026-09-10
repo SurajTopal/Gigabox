@@ -1,7 +1,7 @@
 import React from 'react';
 import {NavigationContainer} from '@react-navigation/native';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
-import {StyleSheet} from 'react-native';
+import {StyleSheet, Text} from 'react-native';
 import HomeScreen from '../screens/home/HomeScreen';
 import CategoriesScreen from '../screens/categories/CategoriesScreen';
 import SearchScreen from '../screens/search/SearchScreen';
@@ -76,8 +76,6 @@ export default function RootNavigator() {
     </NavigationContainer>
   );
 }
-
-const Text = require('react-native').Text;
 
 const styles = StyleSheet.create({
   tabBar: {
