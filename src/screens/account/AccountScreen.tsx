@@ -1,31 +1,50 @@
 import React from 'react';
-import {View, Text, ScrollView, TouchableOpacity} from 'react-native';
-import {styles} from './AccountScreen.styles';
+import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import { styles } from './AccountScreen.styles';
+import { useAppDispatch, useAppSelector, logout, setUserProfile } from '../../store';
 
 export default function AccountScreen() {
+  const dispatch = useAppDispatch();
+  const { name, email, phone, isLoggedIn, addresses } = useAppSelector(state => state.user);
+
   const menuItems = [
-    {id: 1, icon: '👤', label: 'Profile', subtitle: 'View and edit your profile'},
+    { id: 1, icon: '👤', label: 'Profile Details', subtitle: `${phone}` },
     {
       id: 2,
       icon: '📍',
       label: 'Addresses',
-      subtitle: 'Manage delivery addresses',
+      subtitle: `${addresses.length} saved addresses`,
     },
-    {id: 3, icon: '💳', label: 'Payments', subtitle: 'Payment methods'},
+    { id: 3, icon: '💳', label: 'Payments', subtitle: 'Saved payment methods' },
     {
       id: 4,
       icon: '🎁',
       label: 'Offers & Rewards',
-      subtitle: 'View active offers',
+      subtitle: 'View active promo codes',
     },
-    {id: 5, icon: '🆘', label: 'Help & Support', subtitle: 'Contact support'},
+    { id: 5, icon: '🆘', label: 'Help & Support', subtitle: '24/7 customer support' },
     {
       id: 6,
       icon: '⚙️',
       label: 'Settings',
-      subtitle: 'App preferences',
+      subtitle: 'App preferences & notifications',
     },
   ];
+
+  const handleLogoutToggle = () => {
+    if (isLoggedIn) {
+      dispatch(logout());
+    } else {
+      dispatch(
+        setUserProfile({
+          name: 'Suraj Topal',
+          email: 'suraj@example.com',
+          phone: '+91 9876543210',
+          isLoggedIn: true,
+        }),
+      );
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -40,14 +59,18 @@ export default function AccountScreen() {
             <Text style={styles.avatarText}>👤</Text>
           </View>
           <View style={styles.profileInfo}>
-            <Text style={styles.profileName}>Guest User</Text>
-            <Text style={styles.profileEmail}>user@gigabox.com</Text>
+            <Text style={styles.profileName}>
+              {isLoggedIn ? name : 'Logged Out'}
+            </Text>
+            <Text style={styles.profileEmail}>
+              {isLoggedIn ? email : 'Please log in to manage your account'}
+            </Text>
           </View>
         </View>
 
         {/* Menu Items */}
         <Text style={styles.sectionTitle}>Account</Text>
-        {menuItems.map((item) => (
+        {menuItems.map(item => (
           <TouchableOpacity key={item.id} style={styles.menuItem}>
             <Text style={styles.menuIcon}>{item.icon}</Text>
             <View style={styles.menuContent}>
@@ -58,9 +81,11 @@ export default function AccountScreen() {
           </TouchableOpacity>
         ))}
 
-        {/* Logout Button */}
-        <TouchableOpacity style={styles.logoutButton}>
-          <Text style={styles.logoutText}>Logout</Text>
+        {/* Logout / Login Button */}
+        <TouchableOpacity style={styles.logoutButton} onPress={handleLogoutToggle}>
+          <Text style={styles.logoutText}>
+            {isLoggedIn ? 'Logout' : 'Login'}
+          </Text>
         </TouchableOpacity>
 
         <View style={styles.footer} />

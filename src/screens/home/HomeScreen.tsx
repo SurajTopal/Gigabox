@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -6,21 +6,40 @@ import {
   TextInput,
   TouchableOpacity,
 } from 'react-native';
-import {styles} from './HomeScreen.styles';
+import { styles } from './HomeScreen.styles';
+import { useAppDispatch, useAppSelector, addToCart } from '../../store';
 
 export default function HomeScreen() {
+  const dispatch = useAppDispatch();
+  const totalCartItems = useAppSelector(state => state.cart.totalItems);
+  const addresses = useAppSelector(state => state.user.addresses);
+  const defaultAddress = addresses.find(a => a.isDefault) || addresses[0];
+
+  const [activeTab, setActiveTab] = useState('Sports');
+
   const categories = [
-    {id: 1, name: 'Kitchen', icon: '🍳'},
-    {id: 2, name: 'Sports', icon: '⚽'},
-    {id: 3, name: 'Dry Fruits', icon: '🥜'},
-    {id: 4, name: 'Groceries', icon: '🛒'},
+    { id: 1, name: 'Kitchen', icon: '🍳' },
+    { id: 2, name: 'Sports', icon: '⚽' },
+    { id: 3, name: 'Dry Fruits', icon: '🥜' },
+    { id: 4, name: 'Groceries', icon: '🛒' },
   ];
 
   const products = [
-    {id: 1, name: 'Cricket Bat', price: '₹15,840', discount: '28% OFF'},
-    {id: 2, name: 'Badminton Set', price: '₹5,999', discount: '15% OFF'},
-    {id: 3, name: 'Football', price: '₹2,499', discount: '10% OFF'},
+    { id: '1', name: 'Cricket Bat Pro', price: 15840, rawPrice: '₹15,840', discount: '28% OFF', icon: '🏏' },
+    { id: '2', name: 'Badminton Set', price: 5999, rawPrice: '₹5,999', discount: '15% OFF', icon: '🏸' },
+    { id: '3', name: 'Football', price: 2499, rawPrice: '₹2,499', discount: '10% OFF', icon: '⚽' },
   ];
+
+  const handleAddToCart = (product: typeof products[0]) => {
+    dispatch(
+      addToCart({
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        quantity: 1,
+      }),
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -29,7 +48,12 @@ export default function HomeScreen() {
         <Text style={styles.headerTitle}>Gigabox</Text>
         <View style={styles.headerRight}>
           <TouchableOpacity style={styles.headerIcon}>
-            <Text style={styles.icon}>📞</Text>
+            <Text style={styles.icon}>🛒</Text>
+            {totalCartItems > 0 && (
+              <View style={styles.cartBadge}>
+                <Text style={styles.cartBadgeText}>{totalCartItems}</Text>
+              </View>
+            )}
           </TouchableOpacity>
           <TouchableOpacity style={styles.headerIcon}>
             <Text style={styles.icon}>👤</Text>
@@ -46,7 +70,9 @@ export default function HomeScreen() {
             <Text style={styles.lightningIcon}>⚡</Text>
             <View>
               <Text style={styles.deliveryTime}>60 minutes</Text>
-              <Text style={styles.deliveryArea}>Cantt Area</Text>
+              <Text style={styles.deliveryArea}>
+                {defaultAddress ? defaultAddress.fullAddress : 'Select Location'}
+              </Text>
             </View>
           </View>
           <TouchableOpacity style={styles.changeButton}>
@@ -71,14 +97,15 @@ export default function HomeScreen() {
           {['Kitchen', 'Sports', 'Dry Fruits', 'Upcoming'].map((cat) => (
             <TouchableOpacity
               key={cat}
+              onPress={() => setActiveTab(cat)}
               style={[
                 styles.categoryTab,
-                cat === 'Sports' && styles.categoryTabActive,
+                cat === activeTab && styles.categoryTabActive,
               ]}>
               <Text
                 style={[
                   styles.categoryTabText,
-                  cat === 'Sports' && styles.categoryTabTextActive,
+                  cat === activeTab && styles.categoryTabTextActive,
                 ]}>
                 {cat}
               </Text>
@@ -89,9 +116,9 @@ export default function HomeScreen() {
         {/* Special Offer Banner */}
         <View style={styles.offerBanner}>
           <View style={styles.offerContent}>
-            <Text style={styles.offerDate}>26JAN-10</Text>
+            <Text style={styles.offerDate}>SPECIAL PROMO</Text>
             <Text style={styles.offerText}>10% OFF</Text>
-            <Text style={styles.offerSmallText}>Republic Offer Live™</Text>
+            <Text style={styles.offerSmallText}>Gigabox Special Live™</Text>
           </View>
           <View style={styles.offerBadge}>
             <Text style={styles.badgeEmoji}>🎉</Text>
@@ -125,12 +152,17 @@ export default function HomeScreen() {
         {products.map((product) => (
           <View key={product.id} style={styles.productCard}>
             <View style={styles.productImageContainer}>
-              <Text style={styles.productImagePlaceholder}>🏏</Text>
+              <Text style={styles.productImagePlaceholder}>{product.icon}</Text>
             </View>
             <View style={styles.productInfo}>
               <Text style={styles.productName}>{product.name}</Text>
-              <Text style={styles.productPrice}>{product.price}</Text>
+              <Text style={styles.productPrice}>{product.rawPrice}</Text>
               <Text style={styles.discount}>{product.discount}</Text>
+              <TouchableOpacity
+                style={styles.addToCartButton}
+                onPress={() => handleAddToCart(product)}>
+                <Text style={styles.addToCartText}>+ Add to Cart</Text>
+              </TouchableOpacity>
             </View>
           </View>
         ))}

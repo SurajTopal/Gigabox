@@ -1,13 +1,10 @@
 import React from 'react';
-import {View, Text, ScrollView, TouchableOpacity} from 'react-native';
-import {styles} from './OrdersScreen.styles';
+import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import { styles } from './OrdersScreen.styles';
+import { useAppSelector } from '../../store';
 
 export default function OrdersScreen() {
-  const orders = [
-    {id: 1, name: 'Cricket Bat Pro', status: 'Delivered', date: 'Jan 10, 2025'},
-    {id: 2, name: 'Basketball Set', status: 'In Transit', date: 'Jan 12, 2025'},
-    {id: 3, name: 'Kitchen Utensils', status: 'Processing', date: 'Jan 15, 2025'},
-  ];
+  const orders = useAppSelector(state => state.orders.orders);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -17,6 +14,8 @@ export default function OrdersScreen() {
         return '#FF9800';
       case 'Processing':
         return '#2196F3';
+      case 'Cancelled':
+        return '#F44336';
       default:
         return '#999';
     }
@@ -32,20 +31,22 @@ export default function OrdersScreen() {
         <Text style={styles.sectionTitle}>Your Orders</Text>
 
         {orders.length > 0 ? (
-          orders.map((order) => (
+          orders.map(order => (
             <TouchableOpacity key={order.id} style={styles.orderCard}>
               <View style={styles.orderCardLeft}>
                 <Text style={styles.orderIcon}>📦</Text>
               </View>
               <View style={styles.orderInfo}>
-                <Text style={styles.orderName}>{order.name}</Text>
-                <Text style={styles.orderDate}>{order.date}</Text>
+                <Text style={styles.orderName}>{order.id}</Text>
+                <Text style={styles.orderDate}>
+                  {order.date} • {order.itemsCount} {order.itemsCount === 1 ? 'Item' : 'Items'} • ₹{order.totalAmount}
+                </Text>
               </View>
               <View>
                 <View
                   style={[
                     styles.statusBadge,
-                    {backgroundColor: getStatusColor(order.status)},
+                    { backgroundColor: getStatusColor(order.status) },
                   ]}>
                   <Text style={styles.statusText}>{order.status}</Text>
                 </View>
