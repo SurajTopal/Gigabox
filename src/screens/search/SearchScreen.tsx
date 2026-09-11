@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   FlatList,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useProducts } from '../../hooks/useProducts';
 import { styles } from './SearchScreen.styles';
 
@@ -139,7 +140,7 @@ export default function SearchScreen() {
   }, [localQuery, searching, error, searchResults.length]);
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Search</Text>
       </View>
@@ -176,6 +177,6 @@ export default function SearchScreen() {
           <ActivityIndicator size="small" color="#2563eb" />
         </View>
       )}
-    </View>
+    </SafeAreaView>
   );
 }

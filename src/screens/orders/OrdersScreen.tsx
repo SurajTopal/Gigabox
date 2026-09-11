@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { styles } from './OrdersScreen.styles';
 import { useAppSelector } from '../../store';
 
@@ -44,7 +45,7 @@ export default function OrdersScreen() {
   const orders = useAppSelector(state => state.orders.orders);
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Gigabox</Text>
@@ -75,6 +76,6 @@ export default function OrdersScreen() {
 
         <View style={styles.footer} />
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }

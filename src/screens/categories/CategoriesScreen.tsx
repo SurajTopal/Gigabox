@@ -1,5 +1,6 @@
 import React, { useCallback } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { FlashList } from '@shopify/flash-list';
 import { useProducts } from '../../hooks/useProducts';
 import { styles } from './CategoriesScreen.styles';
@@ -47,7 +48,7 @@ export default function CategoriesScreen() {
   }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Gigabox</Text>
       </View>
@@ -75,6 +76,6 @@ export default function CategoriesScreen() {
 
         <View style={styles.footer} />
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }

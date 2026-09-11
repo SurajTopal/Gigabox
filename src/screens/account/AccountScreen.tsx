@@ -1,5 +1,6 @@
 import React, { useCallback, useMemo } from 'react';
 import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { styles } from './AccountScreen.styles';
 import { useAppDispatch, useAppSelector, logout, setUserProfile } from '../../store';
 
@@ -56,7 +57,7 @@ export default function AccountScreen() {
   }, [dispatch, isLoggedIn]);
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Gigabox</Text>
@@ -94,6 +95,6 @@ export default function AccountScreen() {
 
         <View style={styles.footer} />
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }

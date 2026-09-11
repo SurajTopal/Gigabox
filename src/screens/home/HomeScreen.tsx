@@ -1,5 +1,6 @@
 import React, { useCallback, useState } from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator, Image, TextInput } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { FlashList } from '@shopify/flash-list';
 import { useProducts } from '../../hooks/useProducts';
 import { styles } from './HomeScreen.styles';
@@ -155,7 +156,7 @@ export default function HomeScreen() {
   // Empty/error states
   if (loading && products.length === 0) {
     return (
-      <View style={styles.container}>
+      <SafeAreaView style={styles.container}>
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Gigabox</Text>
         </View>
@@ -163,13 +164,13 @@ export default function HomeScreen() {
           <ActivityIndicator size="large" color="#2563eb" />
           <Text style={{ color: '#999' }}>Loading products...</Text>
         </View>
-      </View>
+      </SafeAreaView>
     );
   }
 
   if (error && products.length === 0) {
     return (
-      <View style={styles.container}>
+      <SafeAreaView style={styles.container}>
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Gigabox</Text>
         </View>
@@ -186,12 +187,12 @@ export default function HomeScreen() {
             <Text style={{ color: 'white', fontWeight: '600' }}>Retry</Text>
           </TouchableOpacity>
         </View>
-      </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Gigabox</Text>
@@ -243,6 +244,6 @@ export default function HomeScreen() {
           <Text style={{ color: '#999' }}>No products found</Text>
         </View>
       )}
-    </View>
+    </SafeAreaView>
   );
 }
