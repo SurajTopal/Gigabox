@@ -1,22 +1,29 @@
 import React, { useCallback, useState } from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator, Image, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
+import Toast from 'react-native-toast-message';
 import { FlashList } from '@shopify/flash-list';
 import { useProducts } from '../../hooks/useProducts';
+import { useAppDispatch } from '../../store';
+import { addToCart } from '../../store/slices/cartSlice';
 import { styles } from './HomeScreen.styles';
 
 interface ProductCardProps {
+  id: number;
   title: string;
   price: number;
   rating: number;
   stock: number;
   thumbnail: string;
   discountPercentage: number;
+  onNavigate: (id: number) => void;
+  onAddToCart: (id: number, title: string, price: number, quantity: number) => void;
 }
 
 // Modern product card with image and discount
 const ProductCard = React.memo(
-  ({ title, price, rating, stock, thumbnail, discountPercentage }: ProductCardProps) => {
+  ({ id, title, price, rating, stock, thumbnail, discountPercentage, onNavigate, onAddToCart }: ProductCardProps) => {
     const inStock = stock > 0;
     const [imageError, setImageError] = useState(false);
     const [quantity, setQuantity] = useState(1);
@@ -32,16 +39,20 @@ const ProductCard = React.memo(
     const handleIncrement = () => {
       if (quantity < stock) {
         setQuantity(quantity + 1);
+      } else {
+        Toast.show({
+          type: 'info',
+          text1: `Max quantity - Only ${stock} available`,
+        });
       }
     };
 
     const handleAddToCart = () => {
-      console.log(`Added ${quantity} of ${title} to cart`);
-      // TODO: dispatch addToCart action to Redux
+      onAddToCart(id, title, price, quantity);
     };
 
     return (
-      <TouchableOpacity style={styles.productCard} activeOpacity={1} onPress={() => {}}>
+      <TouchableOpacity style={styles.productCard} activeOpacity={1} onPress={() => onNavigate(id)}>
         {/* Image Container */}
         <View style={styles.imageContainer}>
           {!imageError && thumbnail ? (
@@ -105,8 +116,7 @@ const ProductCard = React.memo(
               <Text style={styles.quantityValue}>{quantity}</Text>
               <TouchableOpacity
                 style={styles.quantityButton}
-                onPress={handleIncrement}
-                disabled={quantity >= stock}>
+                onPress={handleIncrement}>
                 <Text style={styles.quantityButtonText}>+</Text>
               </TouchableOpacity>
             </View>
@@ -128,8 +138,34 @@ const ProductCard = React.memo(
 ProductCard.displayName = 'ProductCard';
 
 export default function HomeScreen() {
+  const dispatch = useAppDispatch();
+  const navigation = useNavigation();
   const { products, loading, error, reload, loadMore } = useProducts();
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Navigate to product details
+  const handleProductPress = useCallback(
+    (productId: number) => {
+      navigation.navigate('ProductDetail', { productId });
+    },
+    [navigation],
+  );
+
+  // Add to cart and navigate
+  const handleAddToCart = useCallback(
+    (id: number, title: string, price: number, quantity: number) => {
+      dispatch(
+        addToCart({
+          id: id.toString(),
+          name: title,
+          price,
+          quantity,
+        }),
+      );
+      navigation.navigate('Cart');
+    },
+    [dispatch, navigation],
+  );
 
   // Load more products on scroll end
   const handleLoadMore = useCallback(() => {
@@ -223,12 +259,15 @@ export default function HomeScreen() {
           renderItem={({ item }) => (
             <ProductCard
               key={item.id}
+              id={item.id}
               title={item.title}
               price={item.price}
               rating={item.rating}
               stock={item.stock}
               thumbnail={item.thumbnail}
               discountPercentage={item.discountPercentage}
+              onNavigate={handleProductPress}
+              onAddToCart={handleAddToCart}
             />
           )}
           keyExtractor={(item) => item.id.toString()}

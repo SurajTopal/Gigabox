@@ -1,15 +1,28 @@
 import React from 'react';
 import {NavigationContainer} from '@react-navigation/native';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
+import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {StyleSheet, Text} from 'react-native';
 import HomeScreen from '../screens/home/HomeScreen';
-import CategoriesScreen from '../screens/categories/CategoriesScreen';
-import SearchScreen from '../screens/search/SearchScreen';
+import ProductDetailScreen from '../screens/productDetail/ProductDetailScreen';
+import CartScreen from '../screens/cart/CartScreen';
 import OrdersScreen from '../screens/orders/OrdersScreen';
 import AccountScreen from '../screens/account/AccountScreen';
 import {COLORS} from '../utils/colors';
 
 const Tab = createBottomTabNavigator();
+const Stack = createNativeStackNavigator();
+
+// Home Stack with ProductDetailScreen and CartScreen
+function HomeStack() {
+  return (
+    <Stack.Navigator screenOptions={{headerShown: false}}>
+      <Stack.Screen name="HomeMain" component={HomeScreen} />
+      <Stack.Screen name="ProductDetail" component={ProductDetailScreen} />
+      <Stack.Screen name="Cart" component={CartScreen} />
+    </Stack.Navigator>
+  );
+}
 
 export default function RootNavigator() {
   return (
@@ -24,31 +37,11 @@ export default function RootNavigator() {
         }}>
         <Tab.Screen
           name="Home"
-          component={HomeScreen}
+          component={HomeStack}
           options={{
             tabBarLabel: 'Home',
             tabBarIcon: ({color}) => (
               <Text style={{fontSize: 24, color}}>🏠</Text>
-            ),
-          }}
-        />
-        <Tab.Screen
-          name="Categories"
-          component={CategoriesScreen}
-          options={{
-            tabBarLabel: 'Categories',
-            tabBarIcon: ({color}) => (
-              <Text style={{fontSize: 24, color}}>📋</Text>
-            ),
-          }}
-        />
-        <Tab.Screen
-          name="Search"
-          component={SearchScreen}
-          options={{
-            tabBarLabel: 'Search',
-            tabBarIcon: ({color}) => (
-              <Text style={{fontSize: 24, color}}>🔍</Text>
             ),
           }}
         />
