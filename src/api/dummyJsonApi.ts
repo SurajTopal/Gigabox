@@ -9,6 +9,14 @@ const apiClient = axios.create({
 });
 
 // Types - Product data from dummyjson API
+export interface Review {
+  rating: number;
+  comment: string;
+  date: string;
+  reviewerName: string;
+  reviewerEmail: string;
+}
+
 export interface Product {
   id: number;
   title: string;
@@ -18,6 +26,8 @@ export interface Product {
   category: string;
   thumbnail: string;
   discountPercentage: number;
+  description?: string;
+  reviews?: Review[];
 }
 
 export interface ApiResponse<T> {
