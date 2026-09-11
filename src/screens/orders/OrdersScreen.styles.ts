@@ -47,17 +47,18 @@ export const styles = StyleSheet.create({
     marginRight: 12,
   },
   orderIcon: {
-    fontSize: 24,
+    fontSize: 28,
+    marginRight: 12,
   },
   orderInfo: {
     flex: 1,
   },
-  orderName: {
+  orderId: {
     fontSize: 14,
     fontWeight: '600',
     color: COLORS.text,
   },
-  orderDate: {
+  orderMeta: {
     fontSize: 12,
     color: COLORS.textSecondary,
     marginTop: 2,

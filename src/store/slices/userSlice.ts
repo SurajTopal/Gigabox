@@ -16,24 +16,11 @@ export interface UserState {
 }
 
 const initialState: UserState = {
-  name: 'Suraj Topal',
-  email: 'suraj@example.com',
-  phone: '+91 9876543210',
-  isLoggedIn: true,
-  addresses: [
-    {
-      id: '1',
-      title: 'Home',
-      fullAddress: '123 Main Street, Sector 15, City',
-      isDefault: true,
-    },
-    {
-      id: '2',
-      title: 'Office',
-      fullAddress: 'Tech Park, Tower B, 4th Floor, Tech Hub',
-      isDefault: false,
-    },
-  ],
+  name: '',
+  email: '',
+  phone: '',
+  isLoggedIn: false,
+  addresses: [],
 };
 
 export const userSlice = createSlice({
