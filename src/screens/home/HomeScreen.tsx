@@ -30,6 +30,15 @@ const ProductCard = React.memo(
     const [quantity, setQuantity] = useState(1);
     const discountedPrice = Math.round(price * (1 - discountPercentage / 100));
 
+    // FlashList recycles this instance across products, so per-item state has to
+    // be reset when the view is handed a different product.
+    const [renderedId, setRenderedId] = useState(id);
+    if (renderedId !== id) {
+      setRenderedId(id);
+      setQuantity(1);
+      setImageError(false);
+    }
+
     // Handle quantity change
     const handleDecrement = () => {
       if (quantity > 1) {
@@ -138,6 +147,10 @@ const ProductCard = React.memo(
 
 ProductCard.displayName = 'ProductCard';
 
+// A card row is ~310dp, so FlashList's 250dp Android default buffers less than one
+// row and a fast fling outruns it. ~3 rows of runway each way.
+const DRAW_DISTANCE = 1000;
+
 export default function HomeScreen() {
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
@@ -198,12 +211,36 @@ export default function HomeScreen() {
     };
   }, []);
 
-  // Load more products on scroll end
+  // Guarded by a ref, not `loading`: onEndReached can fire several times during a
+  // fast scroll before React commits loading=true, which would request the same
+  // page repeatedly and append duplicates.
+  const loadingRef = useRef(false);
+  useEffect(() => {
+    loadingRef.current = loading;
+  }, [loading]);
+
   const handleLoadMore = useCallback(() => {
-    if (!loading) {
-      loadMore();
-    }
-  }, [loading, loadMore]);
+    if (loadingRef.current) return;
+    loadingRef.current = true;
+    loadMore();
+  }, [loadMore]);
+
+  const renderProduct = useCallback(
+    ({ item }: { item: (typeof products)[number] }) => (
+      <ProductCard
+        id={item.id}
+        title={item.title}
+        price={item.price}
+        rating={item.rating}
+        stock={item.stock}
+        thumbnail={item.thumbnail}
+        discountPercentage={item.discountPercentage}
+        onNavigate={handleProductPress}
+        onAddToCart={handleAddToCart}
+      />
+    ),
+    [handleProductPress, handleAddToCart],
+  );
 
   const handleFilterPress = () => {
     console.log('Filter pressed');
@@ -223,7 +260,7 @@ export default function HomeScreen() {
   // Empty/error states
   if (loading && products.length === 0) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
         <Header title="Gigabox" />
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', gap: 12 }}>
           <ActivityIndicator size="large" color="#2563eb" />
@@ -235,7 +272,7 @@ export default function HomeScreen() {
 
   if (error && products.length === 0) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
         <Header title="Gigabox" />
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', gap: 12 }}>
           <Text style={{ color: '#dc2626', fontSize: 14 }}>Error: {error}</Text>
@@ -255,7 +292,7 @@ export default function HomeScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
       <Header title="Gigabox" />
 
       {/* Search & Filter Bar */}
@@ -282,22 +319,10 @@ export default function HomeScreen() {
         searchResults.length > 0 ? (
           <FlashList
             data={searchResults}
-            renderItem={({ item }) => (
-              <ProductCard
-                key={item.id}
-                id={item.id}
-                title={item.title}
-                price={item.price}
-                rating={item.rating}
-                stock={item.stock}
-                thumbnail={item.thumbnail}
-                discountPercentage={item.discountPercentage}
-                onNavigate={handleProductPress}
-                onAddToCart={handleAddToCart}
-              />
-            )}
+            renderItem={renderProduct}
             keyExtractor={(item) => item.id.toString()}
             numColumns={2}
+            drawDistance={DRAW_DISTANCE}
             contentContainerStyle={{ paddingHorizontal: 10 }}
             scrollIndicatorInsets={{ right: 1 }}
           />
@@ -310,24 +335,12 @@ export default function HomeScreen() {
         // Show all products
         <FlashList
           data={products}
-          renderItem={({ item }) => (
-            <ProductCard
-              key={item.id}
-              id={item.id}
-              title={item.title}
-              price={item.price}
-              rating={item.rating}
-              stock={item.stock}
-              thumbnail={item.thumbnail}
-              discountPercentage={item.discountPercentage}
-              onNavigate={handleProductPress}
-              onAddToCart={handleAddToCart}
-            />
-          )}
+          renderItem={renderProduct}
           keyExtractor={(item) => item.id.toString()}
           numColumns={2}
+          drawDistance={DRAW_DISTANCE}
           onEndReached={handleLoadMore}
-          onEndReachedThreshold={0.5}
+          onEndReachedThreshold={1.5}
           ListFooterComponent={renderFooter}
           contentContainerStyle={{ paddingHorizontal: 10 }}
           scrollIndicatorInsets={{ right: 1 }}
