@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TextInput, Alert } from 'react-native';
+import { View, Text, ScrollView, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Header from '../../components/Header';
 import Button from '../../components/Button';
 import { useAppSelector, useAppDispatch } from '../../store';
 import { clearCart } from '../../store/slices/cartSlice';
-import { addOrder } from '../../store/slices/ordersSlice';
+import { addOrder, Order } from '../../store/slices/ordersSlice';
 import { styles } from './CheckoutScreen.styles';
 
 interface CheckoutScreenProps {
@@ -17,47 +17,13 @@ export default function CheckoutScreen({ navigation }: CheckoutScreenProps) {
   const cartItems = useAppSelector(state => state.cart.items);
   const totalAmount = useAppSelector(state => state.cart.totalAmount);
 
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    address: '',
-  });
+  const profile = useAppSelector(state => state.user);
   const [loading, setLoading] = useState(false);
 
   const deliveryCharges = totalAmount > 99 ? 0 : 40;
   const finalTotal = totalAmount + deliveryCharges;
 
-  const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value,
-    }));
-  };
-
-  const validateForm = () => {
-    if (!formData.name.trim()) {
-      Alert.alert('Error', 'Please enter your name');
-      return false;
-    }
-    if (!formData.email.trim()) {
-      Alert.alert('Error', 'Please enter your email');
-      return false;
-    }
-    if (!formData.phone.trim()) {
-      Alert.alert('Error', 'Please enter your phone number');
-      return false;
-    }
-    if (!formData.address.trim()) {
-      Alert.alert('Error', 'Please enter your address');
-      return false;
-    }
-    return true;
-  };
-
   const handlePlaceOrder = async () => {
-    if (!validateForm()) return;
-
     setLoading(true);
 
     try {
@@ -68,18 +34,18 @@ export default function CheckoutScreen({ navigation }: CheckoutScreenProps) {
       const orderId = `ORD-${Date.now()}`;
 
       // Create order object
-      const newOrder = {
+      const newOrder: Order = {
         id: orderId,
         date: new Date().toLocaleDateString(),
         itemsCount: cartItems.length,
         totalAmount: finalTotal,
-        status: 'Processing',
+        status: 'PLACED',
         items: cartItems,
         customer: {
-          name: formData.name,
-          email: formData.email,
-          phone: formData.phone,
-          address: formData.address,
+          name: profile.name,
+          email: profile.email,
+          phone: profile.phone,
+          address: profile.address,
         },
       };
 
@@ -128,59 +94,11 @@ export default function CheckoutScreen({ navigation }: CheckoutScreenProps) {
 
         {/* Delivery Details */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Delivery Details</Text>
-
-          {/* Name */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Full Name *</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter your full name"
-              placeholderTextColor="#ccc"
-              value={formData.name}
-              onChangeText={(value) => handleInputChange('name', value)}
-            />
-          </View>
-
-          {/* Email */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Email *</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter your email"
-              placeholderTextColor="#ccc"
-              keyboardType="email-address"
-              value={formData.email}
-              onChangeText={(value) => handleInputChange('email', value)}
-            />
-          </View>
-
-          {/* Phone */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Phone Number *</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter your phone number"
-              placeholderTextColor="#ccc"
-              keyboardType="phone-pad"
-              value={formData.phone}
-              onChangeText={(value) => handleInputChange('phone', value)}
-            />
-          </View>
-
-          {/* Address */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Delivery Address *</Text>
-            <TextInput
-              style={[styles.input, styles.textAreaInput]}
-              placeholder="Enter your complete address"
-              placeholderTextColor="#ccc"
-              multiline
-              numberOfLines={4}
-              value={formData.address}
-              onChangeText={(value) => handleInputChange('address', value)}
-              textAlignVertical="top"
-            />
+          <Text style={styles.sectionTitle}>Deliver To</Text>
+          <View style={styles.deliverToCard}>
+            <Text style={styles.deliverToName}>{profile.name}</Text>
+            <Text style={styles.deliverToAddress}>{profile.address}</Text>
+            <Text style={styles.deliverToPhone}>{profile.phone}</Text>
           </View>
         </View>
 

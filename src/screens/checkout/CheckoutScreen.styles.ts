@@ -56,28 +56,29 @@ export const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: COLORS.primary,
   },
-  inputGroup: {
-    marginBottom: 16,
+  deliverToCard: {
+    backgroundColor: 'white',
+    borderRadius: 10,
+    padding: 16,
+    borderLeftWidth: 4,
+    borderLeftColor: COLORS.primary,
+    elevation: 1,
   },
-  label: {
-    fontSize: 13,
-    fontWeight: '600',
+  deliverToName: {
+    fontSize: 15,
+    fontWeight: 'bold',
     color: COLORS.text,
     marginBottom: 6,
   },
-  input: {
-    backgroundColor: 'white',
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 14,
-    color: COLORS.text,
+  deliverToAddress: {
+    fontSize: 13,
+    color: '#4b5563',
+    lineHeight: 19,
+    marginBottom: 6,
   },
-  textAreaInput: {
-    minHeight: 100,
-    paddingTop: 10,
+  deliverToPhone: {
+    fontSize: 13,
+    color: '#6b7280',
   },
   buttonSection: {
     marginVertical: 24,

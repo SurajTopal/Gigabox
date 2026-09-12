@@ -3,7 +3,8 @@ import { View, Text, ScrollView, TouchableOpacity, TextInput, Alert } from 'reac
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Header from '../../components/Header';
 import Button from '../../components/Button';
-import { useAppSelector } from '../../store';
+import { useAppSelector, useAppDispatch } from '../../store';
+import { setUserProfile } from '../../store/slices/userSlice';
 import { styles } from './AccountScreen.styles';
 
 interface AccountScreenProps {
@@ -11,12 +12,15 @@ interface AccountScreenProps {
 }
 
 export default function AccountScreen({ navigation }: AccountScreenProps) {
+  const dispatch = useAppDispatch();
+  const savedProfile = useAppSelector(state => state.user);
   const [isEditing, setIsEditing] = useState(false);
+  // Local draft so edits can be cancelled without touching the store.
   const [profileData, setProfileData] = useState({
-    name: 'Suraj Topal',
-    email: 'suraj@b4igodev.com',
-    phone: '+91 98765 43210',
-    address: 'Bangalore, Karnataka',
+    name: savedProfile.name,
+    email: savedProfile.email,
+    phone: savedProfile.phone,
+    address: savedProfile.address,
   });
 
   const orders = useAppSelector(state => state.orders.orders);
@@ -34,6 +38,7 @@ export default function AccountScreen({ navigation }: AccountScreenProps) {
       Alert.alert('Error', 'Name and Email are required');
       return;
     }
+    dispatch(setUserProfile(profileData));
     setIsEditing(false);
     Alert.alert('Success', 'Profile updated successfully');
   };
@@ -151,7 +156,15 @@ export default function AccountScreen({ navigation }: AccountScreenProps) {
               />
               <Button
                 text="Cancel"
-                onPress={() => setIsEditing(false)}
+                onPress={() => {
+                  setProfileData({
+                    name: savedProfile.name,
+                    email: savedProfile.email,
+                    phone: savedProfile.phone,
+                    address: savedProfile.address,
+                  });
+                  setIsEditing(false);
+                }}
                 variant="secondary"
                 fullWidth
                 style={{ marginTop: 12 }}
