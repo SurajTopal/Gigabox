@@ -99,7 +99,7 @@ export default function CheckoutScreen({ navigation }: CheckoutScreenProps) {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
       <Header title="Checkout" showBack onBackPress={() => navigation.goBack()} />
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>

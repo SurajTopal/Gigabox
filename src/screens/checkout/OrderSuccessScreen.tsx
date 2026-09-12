@@ -21,7 +21,7 @@ export default function OrderSuccessScreen({ route, navigation }: OrderSuccessSc
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
       <View style={styles.content}>
         {/* Success Icon */}
         <View style={styles.iconContainer}>

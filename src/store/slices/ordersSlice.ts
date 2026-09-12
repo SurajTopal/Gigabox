@@ -65,9 +65,19 @@ export const ordersSlice = createSlice({
         order.status = 'Cancelled';
       }
     },
+    updateOrderStatus: (
+      state,
+      action: PayloadAction<{ id: string; status: Order['status'] }>,
+    ) => {
+      const order = state.orders.find(o => o.id === action.payload.id);
+      if (order) {
+        order.status = action.payload.status;
+      }
+    },
   },
 });
 
-export const { setOrders, addOrder, cancelOrder } = ordersSlice.actions;
+export const { setOrders, addOrder, cancelOrder, updateOrderStatus } =
+  ordersSlice.actions;
 
 export default ordersSlice.reducer;

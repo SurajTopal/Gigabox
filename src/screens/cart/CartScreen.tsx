@@ -72,7 +72,7 @@ export default function CartScreen({ navigation }: CartScreenProps) {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
       <Header title="My Cart" showBack onBackPress={() => navigation.goBack()} />
 
       {cartItems.length > 0 ? (

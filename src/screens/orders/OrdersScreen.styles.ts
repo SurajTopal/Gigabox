@@ -1,97 +1,107 @@
-import {StyleSheet} from 'react-native';
-import {COLORS} from '../../utils/colors';
+import { StyleSheet } from 'react-native';
+import { COLORS } from '../../utils/colors';
 
 export const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.background,
   },
-  header: {
-    backgroundColor: COLORS.primary,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: COLORS.accent,
-  },
-  content: {
-    flex: 1,
-    paddingHorizontal: 16,
-    paddingTop: 16,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: COLORS.text,
-    marginBottom: 16,
+  listContent: {
+    padding: 16,
+    paddingTop: 12,
   },
   orderCard: {
+    backgroundColor: 'white',
+    borderRadius: 8,
+    marginBottom: 16,
+    overflow: 'hidden',
+    elevation: 2,
+  },
+  cardHeader: {
     flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: COLORS.background,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 12,
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
   },
-  orderCardLeft: {
-    width: 50,
-    height: 50,
-    backgroundColor: COLORS.border,
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  orderIcon: {
-    fontSize: 28,
-    marginRight: 12,
-  },
-  orderInfo: {
+  headerLeft: {
     flex: 1,
   },
   orderId: {
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: 16,
+    fontWeight: 'bold',
     color: COLORS.text,
+    marginBottom: 4,
   },
-  orderMeta: {
+  orderDate: {
     fontSize: 12,
-    color: COLORS.textSecondary,
-    marginTop: 2,
+    color: '#6b7280',
   },
   statusBadge: {
-    paddingHorizontal: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
     paddingVertical: 6,
-    borderRadius: 4,
+    borderRadius: 20,
+  },
+  statusIcon: {
+    fontSize: 14,
+    marginRight: 4,
   },
   statusText: {
     fontSize: 11,
     fontWeight: '600',
-    color: COLORS.background,
+    color: COLORS.text,
+  },
+  cardBody: {
+    padding: 16,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  infoLabel: {
+    fontSize: 13,
+    color: '#6b7280',
+    fontWeight: '500',
+  },
+  infoValue: {
+    fontSize: 15,
+    fontWeight: 'bold',
+    color: COLORS.primary,
+  },
+  cardFooter: {
+    paddingHorizontal: 16,
+    paddingBottom: 12,
+  },
+  viewDetails: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: COLORS.primary,
   },
   emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 60,
+    paddingHorizontal: 20,
   },
   emptyIcon: {
-    fontSize: 48,
+    fontSize: 64,
     marginBottom: 16,
   },
-  emptyText: {
-    fontSize: 16,
-    fontWeight: '600',
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
     color: COLORS.text,
-    marginBottom: 4,
+    marginBottom: 8,
+    textAlign: 'center',
   },
-  emptySubtext: {
-    fontSize: 12,
-    color: COLORS.textSecondary,
-  },
-  footer: {
-    height: 20,
+  emptyMessage: {
+    fontSize: 14,
+    color: '#6b7280',
+    textAlign: 'center',
+    marginBottom: 16,
   },
 });

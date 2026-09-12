@@ -39,7 +39,7 @@ export default function ProductDetailScreen({ route, navigation }: ProductDetail
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
         <Header title="Product Details" showBack onBackPress={() => navigation.goBack()} />
         <View style={styles.loadingContainer}>
           <Text style={styles.loadingText}>Loading...</Text>
@@ -50,7 +50,7 @@ export default function ProductDetailScreen({ route, navigation }: ProductDetail
 
   if (error || !selectedProduct) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
         <Header title="Product Details" showBack onBackPress={() => navigation.goBack()} />
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>Product not found</Text>
@@ -63,7 +63,7 @@ export default function ProductDetailScreen({ route, navigation }: ProductDetail
   const discountedPrice = Math.round(product.price * (1 - product.discountPercentage / 100));
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
       <Header title="Product Details" showBack onBackPress={() => navigation.goBack()} />
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
