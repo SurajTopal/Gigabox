@@ -49,16 +49,19 @@ export const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 20,
   },
-  status_Processing: {
+  status_PLACED: {
     backgroundColor: '#fef3c7',
   },
-  status_In_Transit: {
+  status_PACKED: {
+    backgroundColor: '#fde68a',
+  },
+  status_OUT_FOR_DELIVERY: {
     backgroundColor: '#dbeafe',
   },
-  status_Delivered: {
+  status_DELIVERED: {
     backgroundColor: '#d1fae5',
   },
-  status_Cancelled: {
+  status_CANCELLED: {
     backgroundColor: '#fee2e2',
   },
   statusText: {
@@ -83,51 +86,61 @@ export const styles = StyleSheet.create({
     marginBottom: 12,
   },
 
-  // Progress Bar
-  progressBarContainer: {
-    backgroundColor: 'white',
-    padding: 16,
-    borderRadius: 8,
-    elevation: 1,
-  },
-  progressBar: {
-    height: 6,
-    backgroundColor: '#e5e7eb',
-    borderRadius: 3,
-    overflow: 'hidden',
-    marginBottom: 20,
-  },
-  progressFill: {
-    height: '100%',
-    backgroundColor: COLORS.primary,
-    borderRadius: 3,
-  },
-  statusLabels: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-  },
-  statusLabel: {
-    alignItems: 'center',
-    flex: 1,
-  },
-  statusLabelText: {
-    fontSize: 20,
-    marginBottom: 4,
-    opacity: 0.4,
-  },
-  statusLabelActive: {
-    opacity: 1,
-  },
-  statusLabelName: {
-    fontSize: 11,
-    fontWeight: '600',
+  // Status progress
+  sectionSubtitle: {
+    fontSize: 13,
     color: '#6b7280',
-    textAlign: 'center',
+    marginTop: -6,
+    marginBottom: 14,
   },
-  statusLabelNameActive: {
-    color: COLORS.primary,
+  statusCard: {
+    borderRadius: 14,
+    paddingVertical: 20,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+  },
+  statusCardIcon: {
+    fontSize: 40,
+    marginBottom: 10,
+  },
+  statusCardTitle: {
+    fontSize: 18,
     fontWeight: 'bold',
+    marginBottom: 6,
+  },
+  statusCardDescription: {
+    fontSize: 13,
+    color: '#4b5563',
+    textAlign: 'center',
+    lineHeight: 18,
+  },
+  track: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 18,
+    paddingHorizontal: 4,
+  },
+  trackLine: {
+    flex: 1,
+    height: 3,
+    backgroundColor: '#e5e7eb',
+  },
+  trackDot: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  trackDotPending: {
+    backgroundColor: 'white',
+    borderWidth: 2,
+    borderColor: '#d1d5db',
+  },
+  trackCheck: {
+    fontSize: 13,
+    fontWeight: 'bold',
+    color: 'white',
   },
 
   // Delivery Info

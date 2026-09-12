@@ -13,6 +13,7 @@ interface MapViewProps {
   height?: number;
   apiKey?: string;
   onMessage?: (event: any) => void;
+  phase?: 'waiting' | 'moving' | 'delivered';
 }
 
 export default function MapView({
@@ -25,6 +26,7 @@ export default function MapView({
   height = 300,
   apiKey = 'AIzaSyCQ6GQhUa7OC2T6pTEozwVq-FCu3bRLMac',
   onMessage,
+  phase = 'moving',
 }: MapViewProps) {
   // Rebuilding this string hands the WebView a new source and restarts the
   // animation, so it must only change when the route itself does.
@@ -104,6 +106,7 @@ export default function MapView({
         <div class="route-info">Loading route...</div>
       </div>
       <script>
+        const PHASE = '${phase}';
         const storeLocation = { lat: ${storeLat}, lng: ${storeLng} };
         const deliveryLocation = { lat: ${deliveryLat}, lng: ${deliveryLng} };
         const centerLat = (${storeLat} + ${deliveryLat}) / 2;
@@ -299,7 +302,25 @@ export default function MapView({
               console.log('Waypoints extracted:', waypoints.length);
               console.log('Total distance:', distanceMeters, 'meters');
 
-              if (waypoints.length > 1) {
+              const progressPill = document.querySelector('.progress-pill');
+
+              if (PHASE !== 'moving') {
+                // Not en route: park the bike at whichever end matches the phase
+                // and skip the animation entirely.
+                const done = PHASE === 'delivered';
+                const at = done ? waypoints[waypoints.length - 1] : waypoints[0];
+                bikeMarker.setPosition(new google.maps.LatLng(at.lat, at.lng));
+                if (done) {
+                  traveledPath.setPath(
+                    waypoints.map(p => new google.maps.LatLng(p.lat, p.lng))
+                  );
+                }
+                if (progressPill) {
+                  progressPill.innerText = done
+                    ? '✅ Delivered • ' + formatDistance(distanceMeters) + ' covered'
+                    : '📦 Packing your order';
+                }
+              } else if (waypoints.length > 1) {
                 // Calculate total time in milliseconds
                 totalDistance = distanceMeters;
                 const totalTimeMs = (totalDistance / 1000 / BIKE_SPEED_KMH) * 3600 * 1000;
@@ -400,6 +421,7 @@ export default function MapView({
       deliveryLng,
       storeAddress,
       deliveryAddress,
+      phase,
     ],
   );
 

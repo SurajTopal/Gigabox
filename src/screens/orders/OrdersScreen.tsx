@@ -5,51 +5,38 @@ import Header from '../../components/Header';
 import Button from '../../components/Button';
 import { styles } from './OrdersScreen.styles';
 import { useAppSelector } from '../../store';
+import {
+  Order,
+  OrderStatus,
+  ORDER_STATUS_LABEL,
+} from '../../store/slices/ordersSlice';
 
 interface OrdersScreenProps {
   navigation: any;
 }
 
-const getStatusColor = (status: string) => {
-  switch (status) {
-    case 'Processing':
-      return '#fef3c7';
-    case 'In Transit':
-      return '#dbeafe';
-    case 'Delivered':
-      return '#d1fae5';
-    case 'Cancelled':
-      return '#fee2e2';
-    default:
-      return '#f3f4f6';
-  }
+const STATUS_BADGE: Record<OrderStatus, { color: string; icon: string }> = {
+  PLACED: { color: '#fef3c7', icon: '📋' },
+  PACKED: { color: '#fde68a', icon: '📦' },
+  OUT_FOR_DELIVERY: { color: '#dbeafe', icon: '🚚' },
+  DELIVERED: { color: '#d1fae5', icon: '✅' },
+  CANCELLED: { color: '#fee2e2', icon: '❌' },
 };
 
-const getStatusIcon = (status: string) => {
-  switch (status) {
-    case 'Processing':
-      return '📋';
-    case 'In Transit':
-      return '🚚';
-    case 'Delivered':
-      return '✅';
-    case 'Cancelled':
-      return '❌';
-    default:
-      return '📦';
-  }
-};
-
-const OrderCard = React.memo(({ order, onPress }: any) => (
+const OrderCard = React.memo(({ order, onPress }: { order: Order; onPress: () => void }) => (
   <TouchableOpacity style={styles.orderCard} onPress={onPress}>
     <View style={styles.cardHeader}>
       <View style={styles.headerLeft}>
         <Text style={styles.orderId}>{order.id}</Text>
         <Text style={styles.orderDate}>{order.date}</Text>
       </View>
-      <View style={[styles.statusBadge, { backgroundColor: getStatusColor(order.status) }]}>
-        <Text style={styles.statusIcon}>{getStatusIcon(order.status)}</Text>
-        <Text style={styles.statusText}>{order.status}</Text>
+      <View
+        style={[
+          styles.statusBadge,
+          { backgroundColor: STATUS_BADGE[order.status].color },
+        ]}>
+        <Text style={styles.statusIcon}>{STATUS_BADGE[order.status].icon}</Text>
+        <Text style={styles.statusText}>{ORDER_STATUS_LABEL[order.status]}</Text>
       </View>
     </View>
 

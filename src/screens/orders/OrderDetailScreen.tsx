@@ -6,7 +6,12 @@ import Button from '../../components/Button';
 import MapView from '../../components/MapView';
 import { GOOGLE_MAPS_API_KEY } from '../../config/apiConfig';
 import { useAppDispatch, useAppSelector } from '../../store';
-import { updateOrderStatus } from '../../store/slices/ordersSlice';
+import {
+  updateOrderStatus,
+  Order,
+  OrderStatus,
+  ORDER_STATUS_LABEL,
+} from '../../store/slices/ordersSlice';
 import { styles } from './OrderDetailScreen.styles';
 
 interface OrderDetailScreenProps {
@@ -26,11 +31,41 @@ const DELIVERY = {
   label: 'Indian Luxury PG',
 };
 
-const STATUS_TIMELINE = [
-  { status: 'Processing', icon: '📋', time: '2 hours ago' },
-  { status: 'Packed', icon: '📦', time: 'Will be soon' },
-  { status: 'In Transit', icon: '🚚', time: 'Will be soon' },
-  { status: 'Delivered', icon: '✅', time: 'Will be soon' },
+const STATUS_TIMELINE: {
+  status: OrderStatus;
+  icon: string;
+  color: string;
+  tint: string;
+  description: string;
+}[] = [
+  {
+    status: 'PLACED',
+    icon: '📋',
+    color: '#2F6BFF',
+    tint: '#EAF2FE',
+    description: 'Your order has been successfully placed.',
+  },
+  {
+    status: 'PACKED',
+    icon: '📦',
+    color: '#F5871F',
+    tint: '#FDF1E3',
+    description: 'Your order is being packed at our warehouse.',
+  },
+  {
+    status: 'OUT_FOR_DELIVERY',
+    icon: '🛵',
+    color: '#8B5CF6',
+    tint: '#EEEBFB',
+    description: 'Your order is on the way to your address.',
+  },
+  {
+    status: 'DELIVERED',
+    icon: '✅',
+    color: '#1DA65A',
+    tint: '#E7F6EC',
+    description: 'Your order has been delivered successfully.',
+  },
 ];
 
 export default function OrderDetailScreen({ route, navigation }: OrderDetailScreenProps) {
@@ -38,26 +73,20 @@ export default function OrderDetailScreen({ route, navigation }: OrderDetailScre
   const dispatch = useAppDispatch();
   // route.params holds a snapshot taken at navigation time, so the live row is
   // read from the store to pick up the status change on arrival.
-  const order =
+  const order: Order =
     useAppSelector(state => state.orders.orders.find(o => o.id === orderParam.id)) ??
     orderParam;
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [scrollEnabled, setScrollEnabled] = useState(true);
 
-  const getCurrentStatusIndex = () => {
-    switch (order.status) {
-      case 'Processing':
-        return 0;
-      case 'In Transit':
-        return 2;
-      case 'Delivered':
-        return 3;
-      default:
-        return 0;
-    }
-  };
+  const getCurrentStatusIndex = () =>
+    Math.max(
+      STATUS_TIMELINE.findIndex(step => step.status === order.status),
+      0,
+    );
 
-  const canCancelOrder = order.status !== 'Delivered' && order.status !== 'Cancelled';
+  const canCancelOrder =
+    order.status !== 'DELIVERED' && order.status !== 'CANCELLED';
 
   const handleCancelOrder = () => {
     setShowCancelDialog(false);
@@ -73,7 +102,7 @@ export default function OrderDetailScreen({ route, navigation }: OrderDetailScre
       } else if (message.action === 'enableScroll') {
         setScrollEnabled(true);
       } else if (message.action === 'delivered') {
-        dispatch(updateOrderStatus({ id: order.id, status: 'Delivered' }));
+        dispatch(updateOrderStatus({ id: order.id, status: 'DELIVERED' }));
       }
     } catch (e) {
       // Ignore parse errors
@@ -88,6 +117,7 @@ export default function OrderDetailScreen({ route, navigation }: OrderDetailScre
   };
 
   const currentStatusIndex = getCurrentStatusIndex();
+  const currentStep = STATUS_TIMELINE[currentStatusIndex];
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
@@ -115,6 +145,13 @@ export default function OrderDetailScreen({ route, navigation }: OrderDetailScre
           height={250}
           apiKey={GOOGLE_MAPS_API_KEY}
           onMessage={handleWebViewMessage}
+          phase={
+            order.status === 'DELIVERED'
+              ? 'delivered'
+              : order.status === 'OUT_FOR_DELIVERY'
+              ? 'moving'
+              : 'waiting'
+          }
         />
       </View>
 
@@ -131,49 +168,59 @@ export default function OrderDetailScreen({ route, navigation }: OrderDetailScre
             <Text style={styles.orderDate}>{order.date}</Text>
           </View>
           <View style={[styles.statusBadge, styles[`status_${order.status}`]]}>
-            <Text style={styles.statusText}>{order.status}</Text>
+            <Text style={styles.statusText}>
+              {ORDER_STATUS_LABEL[order.status]}
+            </Text>
           </View>
         </View>
 
-        {/* Status Progress Bar */}
+        {/* Status Progress */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Order Status</Text>
-          <View style={styles.progressBarContainer}>
-            <View style={styles.progressBar}>
-              <View
-                style={[
-                  styles.progressFill,
-                  {
-                    width: `${((currentStatusIndex + 1) / STATUS_TIMELINE.length) * 100}%`,
-                  },
-                ]}
-              />
-            </View>
-            <View style={styles.statusLabels}>
-              {STATUS_TIMELINE.map((step, index) => (
-                <View key={index} style={styles.statusLabel}>
-                  <Text
+          <Text style={styles.sectionSubtitle}>
+            Track your order from placement to delivery.
+          </Text>
+
+          <View style={[styles.statusCard, { backgroundColor: currentStep.tint }]}>
+            <Text style={styles.statusCardIcon}>{currentStep.icon}</Text>
+            <Text style={[styles.statusCardTitle, { color: currentStep.color }]}>
+              {ORDER_STATUS_LABEL[currentStep.status]}
+            </Text>
+            <Text style={styles.statusCardDescription}>
+              {currentStep.description}
+            </Text>
+          </View>
+
+          <View style={styles.track}>
+            {STATUS_TIMELINE.map((step, index) => {
+              const reached = index <= currentStatusIndex;
+              return (
+                <React.Fragment key={step.status}>
+                  {index > 0 && (
+                    <View
+                      style={[
+                        styles.trackLine,
+                        reached && { backgroundColor: step.color },
+                      ]}
+                    />
+                  )}
+                  <View
                     style={[
-                      styles.statusLabelText,
-                      index <= currentStatusIndex && styles.statusLabelActive,
+                      styles.trackDot,
+                      reached
+                        ? { backgroundColor: step.color }
+                        : styles.trackDotPending,
                     ]}>
-                    {step.icon}
-                  </Text>
-                  <Text
-                    style={[
-                      styles.statusLabelName,
-                      index <= currentStatusIndex && styles.statusLabelNameActive,
-                    ]}>
-                    {step.status}
-                  </Text>
-                </View>
-              ))}
-            </View>
+                    {reached && <Text style={styles.trackCheck}>✓</Text>}
+                  </View>
+                </React.Fragment>
+              );
+            })}
           </View>
         </View>
 
         {/* Estimated Delivery */}
-        {order.status !== 'Delivered' && order.status !== 'Cancelled' && (
+        {order.status !== 'DELIVERED' && order.status !== 'CANCELLED' && (
           <View style={styles.deliveryInfo}>
             <Text style={styles.deliveryLabel}>📅 Estimated Delivery</Text>
             <Text style={styles.deliveryDate}>Sep 14, 2026</Text>
