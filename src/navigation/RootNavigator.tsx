@@ -6,6 +6,8 @@ import {StyleSheet, Text} from 'react-native';
 import HomeScreen from '../screens/home/HomeScreen';
 import ProductDetailScreen from '../screens/productDetail/ProductDetailScreen';
 import CartScreen from '../screens/cart/CartScreen';
+import CheckoutScreen from '../screens/checkout/CheckoutScreen';
+import OrderSuccessScreen from '../screens/checkout/OrderSuccessScreen';
 import OrdersScreen from '../screens/orders/OrdersScreen';
 import AccountScreen from '../screens/account/AccountScreen';
 import {COLORS} from '../utils/colors';
@@ -20,6 +22,8 @@ function HomeStack() {
       <Stack.Screen name="HomeMain" component={HomeScreen} />
       <Stack.Screen name="ProductDetail" component={ProductDetailScreen} />
       <Stack.Screen name="Cart" component={CartScreen} />
+      <Stack.Screen name="Checkout" component={CheckoutScreen} />
+      <Stack.Screen name="OrderSuccess" component={OrderSuccessScreen} />
     </Stack.Navigator>
   );
 }

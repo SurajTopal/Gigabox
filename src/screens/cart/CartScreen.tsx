@@ -2,6 +2,7 @@ import React, { useCallback } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, FlatList } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Header from '../../components/Header';
+import Button from '../../components/Button';
 import { useAppSelector, useAppDispatch } from '../../store';
 import { removeFromCart, updateQuantity } from '../../store/slices/cartSlice';
 import { styles } from './CartScreen.styles';
@@ -110,20 +111,28 @@ export default function CartScreen({ navigation }: CartScreenProps) {
               <Text style={styles.totalValue}>₹{Math.round(totalAmount)}</Text>
             </View>
 
-            <TouchableOpacity style={styles.checkoutButton}>
-              <Text style={styles.checkoutText}>Proceed to Checkout</Text>
-            </TouchableOpacity>
+            <Button
+              text="Proceed to Checkout"
+              onPress={() => navigation.navigate('Checkout')}
+              variant="primary"
+              size="large"
+              fullWidth
+            />
           </View>
         </>
       ) : (
         <View style={styles.emptyContainer}>
           <Text style={styles.emptyIcon}>🛒</Text>
           <Text style={styles.emptyText}>Your cart is empty</Text>
-          <TouchableOpacity
-            style={styles.continueShopping}
-            onPress={() => navigation.goBack()}>
-            <Text style={styles.continueShoppingText}>Continue Shopping</Text>
-          </TouchableOpacity>
+          <View style={{ width: '70%' }}>
+            <Button
+              text="Continue Shopping"
+              onPress={() => navigation.goBack()}
+              variant="primary"
+              size="medium"
+              fullWidth
+            />
+          </View>
         </View>
       )}
     </SafeAreaView>
