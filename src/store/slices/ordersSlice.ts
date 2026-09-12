@@ -6,6 +6,13 @@ export interface Order {
   itemsCount: number;
   totalAmount: number;
   status: 'Delivered' | 'In Transit' | 'Cancelled' | 'Processing';
+  items?: any[];
+  customer?: {
+    name: string;
+    email: string;
+    phone: string;
+    address: string;
+  };
 }
 
 export interface OrdersState {
@@ -40,11 +47,16 @@ export const ordersSlice = createSlice({
     setOrders: (state, action: PayloadAction<Order[]>) => {
       state.orders = action.payload;
     },
-    addOrder: (state, action: PayloadAction<Omit<Order, 'id'>>) => {
-      const newOrder: Order = {
-        ...action.payload,
-        id: `GB-${Math.floor(10000 + Math.random() * 90000)}`,
-      };
+    addOrder: (state, action: PayloadAction<Order | Omit<Order, 'id'>>) => {
+      let newOrder: Order;
+      if ('id' in action.payload && action.payload.id) {
+        newOrder = action.payload as Order;
+      } else {
+        newOrder = {
+          ...action.payload,
+          id: `GB-${Math.floor(10000 + Math.random() * 90000)}`,
+        } as Order;
+      }
       state.orders.unshift(newOrder);
     },
     cancelOrder: (state, action: PayloadAction<string>) => {
