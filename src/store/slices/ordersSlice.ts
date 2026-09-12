@@ -1,11 +1,31 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
+export type OrderStatus =
+  | 'PLACED'
+  | 'PACKED'
+  | 'OUT_FOR_DELIVERY'
+  | 'DELIVERED'
+  | 'CANCELLED';
+
+// Values stay underscore-free of spaces so they can be used directly as style
+// keys; anything user-facing goes through this map instead.
+export const ORDER_STATUS_LABEL: Record<OrderStatus, string> = {
+  PLACED: 'Placed',
+  PACKED: 'Packed',
+  OUT_FOR_DELIVERY: 'Out for Delivery',
+  DELIVERED: 'Delivered',
+  CANCELLED: 'Cancelled',
+};
+
+export const PACKED_AFTER_MS = 30000;
+export const OUT_FOR_DELIVERY_AFTER_MS = 15000;
+
 export interface Order {
   id: string;
   date: string;
   itemsCount: number;
   totalAmount: number;
-  status: 'Delivered' | 'In Transit' | 'Cancelled' | 'Processing';
+  status: OrderStatus;
   items?: any[];
   customer?: {
     name: string;
@@ -27,14 +47,14 @@ const initialState: OrdersState = {
       date: 'Sep 08, 2026',
       itemsCount: 3,
       totalAmount: 1499,
-      status: 'Delivered',
+      status: 'DELIVERED',
     },
     {
       id: 'GB-97810',
       date: 'Sep 02, 2026',
       itemsCount: 1,
       totalAmount: 499,
-      status: 'Delivered',
+      status: 'DELIVERED',
     },
   ],
   isLoading: false,
@@ -61,13 +81,13 @@ export const ordersSlice = createSlice({
     },
     cancelOrder: (state, action: PayloadAction<string>) => {
       const order = state.orders.find(o => o.id === action.payload);
-      if (order && order.status !== 'Delivered') {
-        order.status = 'Cancelled';
+      if (order && order.status !== 'DELIVERED') {
+        order.status = 'CANCELLED';
       }
     },
     updateOrderStatus: (
       state,
-      action: PayloadAction<{ id: string; status: Order['status'] }>,
+      action: PayloadAction<{ id: string; status: OrderStatus }>,
     ) => {
       const order = state.orders.find(o => o.id === action.payload.id);
       if (order) {
