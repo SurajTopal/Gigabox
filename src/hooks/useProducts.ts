@@ -2,7 +2,6 @@ import { useEffect, useCallback } from 'react';
 import { useAppDispatch, useAppSelector } from '../store';
 import {
   fetchProducts,
-  fetchCategories,
   fetchProductsByCategory,
   searchProducts,
   fetchProductById,
@@ -27,10 +26,8 @@ export const useProducts = () => {
     error,
   } = useAppSelector((state) => state.products);
 
-  // Fetch initial products and categories on mount
   useEffect(() => {
     dispatch(fetchProducts({ page: 0, limit: 30 }));
-    dispatch(fetchCategories());
   }, [dispatch]);
 
   // Load products by category

@@ -158,8 +158,9 @@ const productSlice = createSlice({
       .addCase(fetchProducts.fulfilled, (state, action) => {
         state.loading = false;
         const newProducts = action.payload?.products || [];
-        // Page 0: replace all, else append for infinite scroll
-        if (state.currentPage === 0) {
+        // Keyed off the requested page, not state.currentPage: a page-0 response
+        // landing after the page has advanced would otherwise append and duplicate.
+        if ((action.meta.arg.page ?? 0) === 0) {
           state.products = newProducts;
         } else {
           state.products.push(...newProducts);
@@ -194,8 +195,7 @@ const productSlice = createSlice({
       .addCase(fetchProductsByCategory.fulfilled, (state, action) => {
         state.loading = false;
         const newProducts = action.payload?.products || [];
-        // Page 0: replace all, else append for infinite scroll
-        if (state.currentPage === 0) {
+        if ((action.meta.arg.page ?? 0) === 0) {
           state.products = newProducts;
         } else {
           state.products.push(...newProducts);
