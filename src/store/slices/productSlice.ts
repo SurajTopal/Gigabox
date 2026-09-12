@@ -99,6 +99,8 @@ export const searchProducts = createAsyncThunk(
       return rejectWithValue('Search query cannot be empty');
     }
 
+   console.log("Query : ",query);
+
     const response = await api.searchProducts(query, limit);
 
     if (!response.success) {

@@ -1,6 +1,7 @@
 import React, { useCallback, useMemo } from 'react';
 import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Header from '../../components/Header';
 import { styles } from './AccountScreen.styles';
 import { useAppDispatch, useAppSelector, logout, setUserProfile } from '../../store';
 
@@ -58,10 +59,7 @@ export default function AccountScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Gigabox</Text>
-      </View>
+      <Header title="Gigabox" />
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* User profile card */}

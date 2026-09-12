@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
+import Header from '../../components/Header';
 import { useProducts } from '../../hooks/useProducts';
 import { useAppDispatch } from '../../store';
 import { addToCart } from '../../store/slices/cartSlice';
@@ -39,13 +40,7 @@ export default function ProductDetailScreen({ route, navigation }: ProductDetail
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Text style={styles.backButton}>← Back</Text>
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Product Details</Text>
-          <View style={{ width: 50 }} />
-        </View>
+        <Header title="Product Details" showBack onBackPress={() => navigation.goBack()} />
         <View style={styles.loadingContainer}>
           <Text style={styles.loadingText}>Loading...</Text>
         </View>
@@ -56,13 +51,7 @@ export default function ProductDetailScreen({ route, navigation }: ProductDetail
   if (error || !selectedProduct) {
     return (
       <SafeAreaView style={styles.container}>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Text style={styles.backButton}>← Back</Text>
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Product Details</Text>
-          <View style={{ width: 50 }} />
-        </View>
+        <Header title="Product Details" showBack onBackPress={() => navigation.goBack()} />
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>Product not found</Text>
         </View>
@@ -75,14 +64,7 @@ export default function ProductDetailScreen({ route, navigation }: ProductDetail
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Text style={styles.backButton}>← Back</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Product Details</Text>
-        <View style={{ width: 50 }} />
-      </View>
+      <Header title="Product Details" showBack onBackPress={() => navigation.goBack()} />
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Product Image */}

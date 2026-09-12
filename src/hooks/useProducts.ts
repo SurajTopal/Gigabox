@@ -45,7 +45,9 @@ export const useProducts = () => {
   // Search products with debounce
   const handleSearch = useCallback(
     (query: string) => {
+      
       dispatch(setSearchQuery(query));
+
       if (query.trim()) {
         dispatch(searchProducts({ query, limit: 30 }));
       } else {

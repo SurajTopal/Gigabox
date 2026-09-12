@@ -1,6 +1,7 @@
 import React, { useCallback } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, FlatList } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Header from '../../components/Header';
 import { useAppSelector, useAppDispatch } from '../../store';
 import { removeFromCart, updateQuantity } from '../../store/slices/cartSlice';
 import { styles } from './CartScreen.styles';
@@ -71,14 +72,7 @@ export default function CartScreen({ navigation }: CartScreenProps) {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Text style={styles.backButton}>← Back</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>My Cart</Text>
-        <View style={{ width: 50 }} />
-      </View>
+      <Header title="My Cart" showBack onBackPress={() => navigation.goBack()} />
 
       {cartItems.length > 0 ? (
         <>

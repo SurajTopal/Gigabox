@@ -1,9 +1,10 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState, useRef, useEffect } from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator, Image, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import Toast from 'react-native-toast-message';
 import { FlashList } from '@shopify/flash-list';
+import Header from '../../components/Header';
 import { useProducts } from '../../hooks/useProducts';
 import { useAppDispatch } from '../../store';
 import { addToCart } from '../../store/slices/cartSlice';
@@ -140,8 +141,9 @@ ProductCard.displayName = 'ProductCard';
 export default function HomeScreen() {
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
-  const { products, loading, error, reload, loadMore } = useProducts();
+  const { products, loading, error, reload, loadMore, searchResults, searching, handleSearch } = useProducts();
   const [searchQuery, setSearchQuery] = useState('');
+  const debounceTimer = useRef<NodeJS.Timeout | null>(null);
 
   // Navigate to product details
   const handleProductPress = useCallback(
@@ -166,6 +168,35 @@ export default function HomeScreen() {
     },
     [dispatch, navigation],
   );
+
+  // Handle search with debounce (500ms)
+  const handleSearchChange = useCallback(
+    (text: string) => {
+      setSearchQuery(text);
+
+      // Clear previous timer
+      if (debounceTimer.current) {
+        clearTimeout(debounceTimer.current);
+      }
+
+      // Set new timer - search only after user stops typing
+      if (text.trim()) {
+        debounceTimer.current = setTimeout(() => {
+          handleSearch(text);
+        }, 500);
+      }
+    },
+    [handleSearch],
+  );
+
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceTimer.current) {
+        clearTimeout(debounceTimer.current);
+      }
+    };
+  }, []);
 
   // Load more products on scroll end
   const handleLoadMore = useCallback(() => {
@@ -193,9 +224,7 @@ export default function HomeScreen() {
   if (loading && products.length === 0) {
     return (
       <SafeAreaView style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Gigabox</Text>
-        </View>
+        <Header title="Gigabox" />
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', gap: 12 }}>
           <ActivityIndicator size="large" color="#2563eb" />
           <Text style={{ color: '#999' }}>Loading products...</Text>
@@ -207,9 +236,7 @@ export default function HomeScreen() {
   if (error && products.length === 0) {
     return (
       <SafeAreaView style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Gigabox</Text>
-        </View>
+        <Header title="Gigabox" />
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', gap: 12 }}>
           <Text style={{ color: '#dc2626', fontSize: 14 }}>Error: {error}</Text>
           <TouchableOpacity
@@ -229,10 +256,7 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Gigabox</Text>
-      </View>
+      <Header title="Gigabox" />
 
       {/* Search & Filter Bar */}
       <View style={styles.searchBar}>
@@ -243,7 +267,7 @@ export default function HomeScreen() {
             placeholder="Search products..."
             placeholderTextColor="#999"
             value={searchQuery}
-            onChangeText={setSearchQuery}
+            onChangeText={handleSearchChange}
             returnKeyType="search"
           />
         </View>
@@ -253,7 +277,37 @@ export default function HomeScreen() {
       </View>
 
       {/* Product list */}
-      {products.length > 0 ? (
+      {searchQuery.trim() ? (
+        // Show search results
+        searchResults.length > 0 ? (
+          <FlashList
+            data={searchResults}
+            renderItem={({ item }) => (
+              <ProductCard
+                key={item.id}
+                id={item.id}
+                title={item.title}
+                price={item.price}
+                rating={item.rating}
+                stock={item.stock}
+                thumbnail={item.thumbnail}
+                discountPercentage={item.discountPercentage}
+                onNavigate={handleProductPress}
+                onAddToCart={handleAddToCart}
+              />
+            )}
+            keyExtractor={(item) => item.id.toString()}
+            numColumns={2}
+            contentContainerStyle={{ paddingHorizontal: 10 }}
+            scrollIndicatorInsets={{ right: 1 }}
+          />
+        ) : (
+          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+            <Text style={{ color: '#999' }}>No results found</Text>
+          </View>
+        )
+      ) : products.length > 0 ? (
+        // Show all products
         <FlashList
           data={products}
           renderItem={({ item }) => (
