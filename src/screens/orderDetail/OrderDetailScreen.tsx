@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Linking } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Header from '../../components/Header';
@@ -6,12 +6,13 @@ import Button from '../../components/Button';
 import MapView from '../../components/MapView';
 import OrderSuccessModal from '../../components/OrderSuccessModal';
 import { GOOGLE_MAPS_API_KEY } from '../../config/apiConfig';
-import { useAppDispatch, useAppSelector } from '../../store';
+import { useAppSelector } from '../../store';
 import {
-  updateOrderStatus,
   Order,
   OrderStatus,
   ORDER_STATUS_LABEL,
+  DELIVERED_AFTER_MS,
+  OUT_FOR_DELIVERY_AT_MS,
 } from '../../store/slices/ordersSlice';
 import { styles } from './OrderDetailScreen.styles';
 
@@ -71,7 +72,6 @@ const STATUS_TIMELINE: {
 
 export default function OrderDetailScreen({ route, navigation }: OrderDetailScreenProps) {
   const { order: orderParam, justPlaced } = route.params;
-  const dispatch = useAppDispatch();
   // route.params holds a snapshot taken at navigation time, so the live row is
   // read from the store to pick up the status change on arrival.
   const order: Order =
@@ -79,6 +79,15 @@ export default function OrderDetailScreen({ route, navigation }: OrderDetailScre
     orderParam;
   const [scrollEnabled, setScrollEnabled] = useState(true);
   const [showSuccess, setShowSuccess] = useState(false);
+
+  // Captured once: how far into the ride this order already was when the screen
+  // opened. Held in a ref so it can't change and reload the map mid-animation.
+  const elapsedRideMs = useRef(
+    Math.max(
+      0,
+      Date.now() - ((orderParam.placedAt ?? 0) + OUT_FOR_DELIVERY_AT_MS),
+    ),
+  );
 
   // navigate() reuses an already-mounted OrderDetail and merges params, so this
   // can't be a useState initialiser — that only runs for the first order.
@@ -101,8 +110,6 @@ export default function OrderDetailScreen({ route, navigation }: OrderDetailScre
         setScrollEnabled(false);
       } else if (message.action === 'enableScroll') {
         setScrollEnabled(true);
-      } else if (message.action === 'delivered') {
-        dispatch(updateOrderStatus({ id: order.id, status: 'DELIVERED' }));
       }
     } catch (e) {
       // Ignore parse errors
@@ -145,6 +152,8 @@ export default function OrderDetailScreen({ route, navigation }: OrderDetailScre
           height={250}
           apiKey={GOOGLE_MAPS_API_KEY}
           onMessage={handleWebViewMessage}
+          rideDurationMs={DELIVERED_AFTER_MS}
+          elapsedMs={elapsedRideMs.current}
           phase={
             order.status === 'DELIVERED'
               ? 'delivered'
