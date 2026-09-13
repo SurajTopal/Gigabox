@@ -99,6 +99,8 @@ export const searchProducts = createAsyncThunk(
       return rejectWithValue('Search query cannot be empty');
     }
 
+   console.log("Query : ",query);
+
     const response = await api.searchProducts(query, limit);
 
     if (!response.success) {
@@ -156,8 +158,9 @@ const productSlice = createSlice({
       .addCase(fetchProducts.fulfilled, (state, action) => {
         state.loading = false;
         const newProducts = action.payload?.products || [];
-        // Page 0: replace all, else append for infinite scroll
-        if (state.currentPage === 0) {
+        // Keyed off the requested page, not state.currentPage: a page-0 response
+        // landing after the page has advanced would otherwise append and duplicate.
+        if ((action.meta.arg.page ?? 0) === 0) {
           state.products = newProducts;
         } else {
           state.products.push(...newProducts);
@@ -192,8 +195,7 @@ const productSlice = createSlice({
       .addCase(fetchProductsByCategory.fulfilled, (state, action) => {
         state.loading = false;
         const newProducts = action.payload?.products || [];
-        // Page 0: replace all, else append for infinite scroll
-        if (state.currentPage === 0) {
+        if ((action.meta.arg.page ?? 0) === 0) {
           state.products = newProducts;
         } else {
           state.products.push(...newProducts);
@@ -225,6 +227,9 @@ const productSlice = createSlice({
       .addCase(fetchProductById.pending, (state) => {
         state.loading = true;
         state.error = null;
+        // Otherwise the detail screen keeps rendering the previous product while
+        // the new one loads — and "Add to Cart" would add the wrong item.
+        state.selectedProduct = null;
       })
       .addCase(fetchProductById.fulfilled, (state, action) => {
         state.loading = false;

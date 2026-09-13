@@ -1,8 +1,11 @@
 import React, { useCallback } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, FlatList } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Header from '../../components/Header';
+import Button from '../../components/Button';
 import { useAppSelector, useAppDispatch } from '../../store';
 import { removeFromCart, updateQuantity } from '../../store/slices/cartSlice';
+import { getDeliveryCharge, getOrderTotal } from '../../utils/price';
 import { styles } from './CartScreen.styles';
 
 interface CartScreenProps {
@@ -47,13 +50,8 @@ export default function CartScreen({ navigation }: CartScreenProps) {
   const cartItems = useAppSelector(state => state.cart.items);
   const totalAmount = useAppSelector(state => state.cart.totalAmount);
 
-  const deliveryCharges = () => {
-    if (totalAmount > 99) {
-      return 0;
-    } else {
-      return 40;
-    }
-  }
+  const deliveryCharges = getDeliveryCharge(totalAmount);
+  const orderTotal = getOrderTotal(totalAmount);
 
   const handleRemove = useCallback(
     (itemId: number) => {
@@ -70,15 +68,8 @@ export default function CartScreen({ navigation }: CartScreenProps) {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Text style={styles.backButton}>← Back</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>My Cart</Text>
-        <View style={{ width: 50 }} />
-      </View>
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+      <Header title="My Cart" showBack onBackPress={() => navigation.goBack()} />
 
       {cartItems.length > 0 ? (
         <>
@@ -108,28 +99,36 @@ export default function CartScreen({ navigation }: CartScreenProps) {
 
             <View style={styles.summaryRow}>
               <Text style={styles.summaryLabel}>Delivery Charges :</Text>
-              <Text style={styles.summaryValue}>₹{deliveryCharges()}</Text>
+              <Text style={styles.summaryValue}>₹{deliveryCharges}</Text>
             </View>
 
             <View style={[styles.summaryRow, styles.totalRow]}>
               <Text style={styles.totalLabel}>Total:</Text>
-              <Text style={styles.totalValue}>₹{Math.round(totalAmount)}</Text>
+              <Text style={styles.totalValue}>₹{Math.round(orderTotal)}</Text>
             </View>
 
-            <TouchableOpacity style={styles.checkoutButton}>
-              <Text style={styles.checkoutText}>Proceed to Checkout</Text>
-            </TouchableOpacity>
+            <Button
+              text="Proceed to Checkout"
+              onPress={() => navigation.navigate('Checkout')}
+              variant="primary"
+              size="large"
+              fullWidth
+            />
           </View>
         </>
       ) : (
         <View style={styles.emptyContainer}>
           <Text style={styles.emptyIcon}>🛒</Text>
           <Text style={styles.emptyText}>Your cart is empty</Text>
-          <TouchableOpacity
-            style={styles.continueShopping}
-            onPress={() => navigation.goBack()}>
-            <Text style={styles.continueShoppingText}>Continue Shopping</Text>
-          </TouchableOpacity>
+          <View style={{ width: '70%' }}>
+            <Button
+              text="Continue Shopping"
+              onPress={() => navigation.goBack()}
+              variant="primary"
+              size="medium"
+              fullWidth
+            />
+          </View>
         </View>
       )}
     </SafeAreaView>

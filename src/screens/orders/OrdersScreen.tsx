@@ -1,81 +1,96 @@
 import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Header from '../../components/Header';
+import Button from '../../components/Button';
 import { styles } from './OrdersScreen.styles';
 import { useAppSelector } from '../../store';
+import {
+  Order,
+  OrderStatus,
+  ORDER_STATUS_LABEL,
+} from '../../store/slices/ordersSlice';
 
-// Status color mapping for visual feedback
-const STATUS_COLORS = {
-  Delivered: '#10b981',
-  'In Transit': '#f59e0b',
-  Processing: '#3b82f6',
-  Cancelled: '#ef4444',
-};
-
-interface OrderItemProps {
-  id: string;
-  date: string;
-  itemsCount: number;
-  totalAmount: number;
-  status: string;
+interface OrdersScreenProps {
+  navigation: any;
 }
 
-const OrderItem = React.memo(({ id, date, itemsCount, totalAmount, status }: OrderItemProps) => (
-  <TouchableOpacity style={styles.orderCard}>
-    <Text style={styles.orderIcon}>📦</Text>
-    <View style={styles.orderInfo}>
-      <Text style={styles.orderId}>{id}</Text>
-      <Text style={styles.orderMeta}>
-        {date} • {itemsCount} {itemsCount === 1 ? 'Item' : 'Items'} • ₹{totalAmount}
-      </Text>
+const STATUS_BADGE: Record<OrderStatus, { color: string; icon: string }> = {
+  PLACED: { color: '#fef3c7', icon: '📋' },
+  PACKED: { color: '#fde68a', icon: '📦' },
+  OUT_FOR_DELIVERY: { color: '#dbeafe', icon: '🚚' },
+  DELIVERED: { color: '#d1fae5', icon: '✅' },
+  CANCELLED: { color: '#fee2e2', icon: '❌' },
+};
+
+const OrderCard = React.memo(({ order, onPress }: { order: Order; onPress: () => void }) => (
+  <TouchableOpacity style={styles.orderCard} onPress={onPress}>
+    <View style={styles.cardHeader}>
+      <View style={styles.headerLeft}>
+        <Text style={styles.orderId}>{order.id}</Text>
+        <Text style={styles.orderDate}>{order.date}</Text>
+      </View>
+      <View
+        style={[
+          styles.statusBadge,
+          { backgroundColor: STATUS_BADGE[order.status].color },
+        ]}>
+        <Text style={styles.statusIcon}>{STATUS_BADGE[order.status].icon}</Text>
+        <Text style={styles.statusText}>{ORDER_STATUS_LABEL[order.status]}</Text>
+      </View>
     </View>
-    <View
-      style={[
-        styles.statusBadge,
-        { backgroundColor: STATUS_COLORS[status as keyof typeof STATUS_COLORS] || '#999' },
-      ]}>
-      <Text style={styles.statusText}>{status}</Text>
+
+    <View style={styles.cardBody}>
+      <View style={styles.infoRow}>
+        <Text style={styles.infoLabel}>Items: {order.itemsCount}</Text>
+        <Text style={styles.infoValue}>₹{Math.round(order.totalAmount)}</Text>
+      </View>
+    </View>
+
+    <View style={styles.cardFooter}>
+      <Text style={styles.viewDetails}>View Details →</Text>
     </View>
   </TouchableOpacity>
 ));
 
-OrderItem.displayName = 'OrderItem';
+OrderCard.displayName = 'OrderCard';
 
-export default function OrdersScreen() {
+export default function OrdersScreen({ navigation }: OrdersScreenProps) {
   const orders = useAppSelector(state => state.orders.orders);
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Gigabox</Text>
-      </View>
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+      <Header title="My Orders" />
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        <Text style={styles.sectionTitle}>Your Orders</Text>
-
-        {/* Order list or empty state */}
-        {orders.length > 0 ? (
-          orders.map(order => (
-            <OrderItem
-              key={order.id}
-              id={order.id}
-              date={order.date}
-              itemsCount={order.itemsCount}
-              totalAmount={order.totalAmount}
-              status={order.status}
+      {orders.length > 0 ? (
+        <FlatList
+          data={orders}
+          renderItem={({ item }) => (
+            <OrderCard
+              order={item}
+              onPress={() => navigation.navigate('OrderDetail', { order: item })}
             />
-          ))
-        ) : (
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyIcon}>🛍️</Text>
-            <Text style={styles.emptyText}>No orders yet</Text>
-            <Text style={styles.emptySubtext}>Start shopping to see your orders here</Text>
+          )}
+          keyExtractor={item => item.id}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+        />
+      ) : (
+        <View style={styles.emptyContainer}>
+          <Text style={styles.emptyIcon}>📦</Text>
+          <Text style={styles.emptyTitle}>No Orders Yet</Text>
+          <Text style={styles.emptyMessage}>Start shopping to place your first order</Text>
+          <View style={{ width: '60%', marginTop: 20 }}>
+            <Button
+              text="Start Shopping"
+              onPress={() => navigation.navigate('Home')}
+              variant="primary"
+              size="medium"
+              fullWidth
+            />
           </View>
-        )}
-
-        <View style={styles.footer} />
-      </ScrollView>
+        </View>
+      )}
     </SafeAreaView>
   );
 }

@@ -1,12 +1,14 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState, useRef, useEffect } from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator, Image, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import Toast from 'react-native-toast-message';
 import { FlashList } from '@shopify/flash-list';
+import Header from '../../components/Header';
 import { useProducts } from '../../hooks/useProducts';
 import { useAppDispatch } from '../../store';
 import { addToCart } from '../../store/slices/cartSlice';
+import { getDiscountedPrice } from '../../utils/price';
 import { styles } from './HomeScreen.styles';
 
 interface ProductCardProps {
@@ -27,7 +29,16 @@ const ProductCard = React.memo(
     const inStock = stock > 0;
     const [imageError, setImageError] = useState(false);
     const [quantity, setQuantity] = useState(1);
-    const discountedPrice = Math.round(price * (1 - discountPercentage / 100));
+    const discountedPrice = getDiscountedPrice(price, discountPercentage);
+
+    // FlashList recycles this instance across products, so per-item state has to
+    // be reset when the view is handed a different product.
+    const [renderedId, setRenderedId] = useState(id);
+    if (renderedId !== id) {
+      setRenderedId(id);
+      setQuantity(1);
+      setImageError(false);
+    }
 
     // Handle quantity change
     const handleDecrement = () => {
@@ -48,7 +59,7 @@ const ProductCard = React.memo(
     };
 
     const handleAddToCart = () => {
-      onAddToCart(id, title, price, quantity);
+      onAddToCart(id, title, discountedPrice, quantity);
     };
 
     return (
@@ -137,11 +148,16 @@ const ProductCard = React.memo(
 
 ProductCard.displayName = 'ProductCard';
 
+// A card row is ~310dp, so FlashList's 250dp Android default buffers less than one
+// row and a fast fling outruns it. ~3 rows of runway each way.
+const DRAW_DISTANCE = 1000;
+
 export default function HomeScreen() {
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
-  const { products, loading, error, reload, loadMore } = useProducts();
+  const { products, loading, error, reload, loadMore, searchResults, searching, handleSearch } = useProducts();
   const [searchQuery, setSearchQuery] = useState('');
+  const debounceTimer = useRef<NodeJS.Timeout | null>(null);
 
   // Navigate to product details
   const handleProductPress = useCallback(
@@ -167,12 +183,65 @@ export default function HomeScreen() {
     [dispatch, navigation],
   );
 
-  // Load more products on scroll end
+  // Handle search with debounce (500ms)
+  const handleSearchChange = useCallback(
+    (text: string) => {
+      setSearchQuery(text);
+
+      // Clear previous timer
+      if (debounceTimer.current) {
+        clearTimeout(debounceTimer.current);
+      }
+
+      // Set new timer - search only after user stops typing
+      if (text.trim()) {
+        debounceTimer.current = setTimeout(() => {
+          handleSearch(text);
+        }, 500);
+      }
+    },
+    [handleSearch],
+  );
+
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceTimer.current) {
+        clearTimeout(debounceTimer.current);
+      }
+    };
+  }, []);
+
+  // Guarded by a ref, not `loading`: onEndReached can fire several times during a
+  // fast scroll before React commits loading=true, which would request the same
+  // page repeatedly and append duplicates.
+  const loadingRef = useRef(false);
+  useEffect(() => {
+    loadingRef.current = loading;
+  }, [loading]);
+
   const handleLoadMore = useCallback(() => {
-    if (!loading) {
-      loadMore();
-    }
-  }, [loading, loadMore]);
+    if (loadingRef.current) return;
+    loadingRef.current = true;
+    loadMore();
+  }, [loadMore]);
+
+  const renderProduct = useCallback(
+    ({ item }: { item: (typeof products)[number] }) => (
+      <ProductCard
+        id={item.id}
+        title={item.title}
+        price={item.price}
+        rating={item.rating}
+        stock={item.stock}
+        thumbnail={item.thumbnail}
+        discountPercentage={item.discountPercentage}
+        onNavigate={handleProductPress}
+        onAddToCart={handleAddToCart}
+      />
+    ),
+    [handleProductPress, handleAddToCart],
+  );
 
   const handleFilterPress = () => {
     console.log('Filter pressed');
@@ -192,10 +261,8 @@ export default function HomeScreen() {
   // Empty/error states
   if (loading && products.length === 0) {
     return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Gigabox</Text>
-        </View>
+      <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+        <Header title="Gigabox" />
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', gap: 12 }}>
           <ActivityIndicator size="large" color="#2563eb" />
           <Text style={{ color: '#999' }}>Loading products...</Text>
@@ -206,10 +273,8 @@ export default function HomeScreen() {
 
   if (error && products.length === 0) {
     return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Gigabox</Text>
-        </View>
+      <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+        <Header title="Gigabox" />
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', gap: 12 }}>
           <Text style={{ color: '#dc2626', fontSize: 14 }}>Error: {error}</Text>
           <TouchableOpacity
@@ -228,11 +293,8 @@ export default function HomeScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Gigabox</Text>
-      </View>
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+      <Header title="Gigabox" />
 
       {/* Search & Filter Bar */}
       <View style={styles.searchBar}>
@@ -243,7 +305,7 @@ export default function HomeScreen() {
             placeholder="Search products..."
             placeholderTextColor="#999"
             value={searchQuery}
-            onChangeText={setSearchQuery}
+            onChangeText={handleSearchChange}
             returnKeyType="search"
           />
         </View>
@@ -253,27 +315,33 @@ export default function HomeScreen() {
       </View>
 
       {/* Product list */}
-      {products.length > 0 ? (
+      {searchQuery.trim() ? (
+        // Show search results
+        searchResults.length > 0 ? (
+          <FlashList
+            data={searchResults}
+            renderItem={renderProduct}
+            keyExtractor={(item) => item.id.toString()}
+            numColumns={2}
+            drawDistance={DRAW_DISTANCE}
+            contentContainerStyle={{ paddingHorizontal: 10 }}
+            scrollIndicatorInsets={{ right: 1 }}
+          />
+        ) : (
+          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+            <Text style={{ color: '#999' }}>No results found</Text>
+          </View>
+        )
+      ) : products.length > 0 ? (
+        // Show all products
         <FlashList
           data={products}
-          renderItem={({ item }) => (
-            <ProductCard
-              key={item.id}
-              id={item.id}
-              title={item.title}
-              price={item.price}
-              rating={item.rating}
-              stock={item.stock}
-              thumbnail={item.thumbnail}
-              discountPercentage={item.discountPercentage}
-              onNavigate={handleProductPress}
-              onAddToCart={handleAddToCart}
-            />
-          )}
+          renderItem={renderProduct}
           keyExtractor={(item) => item.id.toString()}
           numColumns={2}
+          drawDistance={DRAW_DISTANCE}
           onEndReached={handleLoadMore}
-          onEndReachedThreshold={0.5}
+          onEndReachedThreshold={1.5}
           ListFooterComponent={renderFooter}
           contentContainerStyle={{ paddingHorizontal: 10 }}
           scrollIndicatorInsets={{ right: 1 }}

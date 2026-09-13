@@ -95,6 +95,7 @@ export const api = {
         data: response.data,
         status: response.status,
       };
+
     } catch (error) {
       if (axios.isCancel(error)) {
         return {

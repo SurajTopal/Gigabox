@@ -11,15 +11,17 @@ export interface UserState {
   name: string;
   email: string;
   phone: string;
+  address: string;
   isLoggedIn: boolean;
   addresses: Address[];
 }
 
 const initialState: UserState = {
-  name: '',
-  email: '',
-  phone: '',
-  isLoggedIn: false,
+  name: 'Suraj Topal',
+  email: 'suraj@b4igodev.com',
+  phone: '+91 98765 43210',
+  address: 'Indian Luxury PG, Veerannapalya Main Rd, Nagavara, Bengaluru 560045',
+  isLoggedIn: true,
   addresses: [],
 };
 
@@ -28,6 +30,14 @@ export const userSlice = createSlice({
   initialState,
   reducers: {
     setUserProfile: (
+      state,
+      action: PayloadAction<Partial<Omit<UserState, 'addresses'>>>,
+    ) => {
+      return { ...state, ...action.payload };
+    },
+    // Applied once at startup from AsyncStorage. Merged rather than replaced so
+    // a profile saved before a field existed still gets that field's default.
+    hydrateUser: (
       state,
       action: PayloadAction<Partial<Omit<UserState, 'addresses'>>>,
     ) => {
@@ -54,7 +64,12 @@ export const userSlice = createSlice({
   },
 });
 
-export const { setUserProfile, addAddress, setDefaultAddress, logout } =
-  userSlice.actions;
+export const {
+  setUserProfile,
+  hydrateUser,
+  addAddress,
+  setDefaultAddress,
+  logout,
+} = userSlice.actions;
 
 export default userSlice.reducer;
