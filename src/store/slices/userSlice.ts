@@ -35,6 +35,14 @@ export const userSlice = createSlice({
     ) => {
       return { ...state, ...action.payload };
     },
+    // Applied once at startup from AsyncStorage. Merged rather than replaced so
+    // a profile saved before a field existed still gets that field's default.
+    hydrateUser: (
+      state,
+      action: PayloadAction<Partial<Omit<UserState, 'addresses'>>>,
+    ) => {
+      return { ...state, ...action.payload };
+    },
     addAddress: (state, action: PayloadAction<Omit<Address, 'id'>>) => {
       const newAddress: Address = {
         ...action.payload,
@@ -56,7 +64,12 @@ export const userSlice = createSlice({
   },
 });
 
-export const { setUserProfile, addAddress, setDefaultAddress, logout } =
-  userSlice.actions;
+export const {
+  setUserProfile,
+  hydrateUser,
+  addAddress,
+  setDefaultAddress,
+  logout,
+} = userSlice.actions;
 
 export default userSlice.reducer;
