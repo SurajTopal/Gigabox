@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { COLORS } from '../utils/colors';
@@ -14,6 +14,8 @@ interface MapViewProps {
   apiKey?: string;
   onMessage?: (event: any) => void;
   phase?: 'waiting' | 'moving' | 'delivered';
+  rideDurationMs?: number;
+  elapsedMs?: number;
 }
 
 export default function MapView({
@@ -27,6 +29,8 @@ export default function MapView({
   apiKey = 'AIzaSyCQ6GQhUa7OC2T6pTEozwVq-FCu3bRLMac',
   onMessage,
   phase = 'moving',
+  rideDurationMs = 60000,
+  elapsedMs = 0,
 }: MapViewProps) {
   // Rebuilding this string hands the WebView a new source and restarts the
   // animation, so it must only change when the route itself does.
@@ -239,12 +243,6 @@ export default function MapView({
             : (meters / 1000).toFixed(1) + ' km';
         }
 
-        // The single source for how long the ride takes. Both the ETA label and
-        // the animation read this, so they can't quote different numbers.
-        function rideTimeMs(meters) {
-          return (meters / 1000 / BIKE_SPEED_KMH) * 3600 * 1000;
-        }
-
         function formatDuration(ms) {
           const seconds = Math.round(ms / 1000);
           if (seconds < 60) {
@@ -258,8 +256,113 @@ export default function MapView({
         let polylinePoints = [];
         let bikeProgress = 0;
         let totalDistance = 0; // in meters
-        const BIKE_SPEED_KMH = 60;
+        // Supplied by the store, which also schedules the DELIVERED status.
+        const RIDE_DURATION_MS = ${rideDurationMs};
+        // How far into the ride we already are when this screen opens.
+        const ELAPSED_MS = ${elapsedMs};
         const UPDATE_INTERVAL = 200; // Update every 200ms for smooth motion
+
+        // ---- Phase control -------------------------------------------------
+        // The page is never rebuilt to change phase; React calls window.setPhase
+        // on the running page instead. Rebuilding was what made the "delivered"
+        // message destroy the animation that sent it.
+        let routeWaypoints = [];
+        let currentPhase = PHASE;
+        let rideTimer = null;
+
+        function toLatLng(p) {
+          return new google.maps.LatLng(p.lat, p.lng);
+        }
+
+        function setPill(text) {
+          const el = document.querySelector('.progress-pill');
+          if (el) {
+            el.innerText = text;
+          }
+        }
+
+        function stopRide() {
+          if (rideTimer) {
+            clearInterval(rideTimer);
+            rideTimer = null;
+          }
+        }
+
+        function showWaiting() {
+          stopRide();
+          bikeMarker.setPosition(toLatLng(routeWaypoints[0]));
+          traveledPath.setPath([]);
+          setPill('📦 Packing your order');
+        }
+
+        function showDelivered() {
+          stopRide();
+          bikeMarker.setPosition(toLatLng(routeWaypoints[routeWaypoints.length - 1]));
+          traveledPath.setPath(routeWaypoints.map(toLatLng));
+          setPill('✅ Delivered • ' + formatDistance(totalDistance) + ' covered');
+        }
+
+        function startRide() {
+          stopRide();
+
+          // Backdated so a screen opened mid-delivery picks the bike up where it
+          // should already be, rather than replaying from the shop.
+          const startTime = Date.now() - ELAPSED_MS;
+          let coveredIndex = 0;
+          let coveredPath = [toLatLng(routeWaypoints[0])];
+
+          rideTimer = setInterval(() => {
+            const progress = (Date.now() - startTime) / RIDE_DURATION_MS;
+
+            // The store marks the order delivered on its own schedule; the bike
+            // just parks when it gets there.
+            if (progress >= 1) {
+              showDelivered();
+              return;
+            }
+
+            const exactIndex = progress * (routeWaypoints.length - 1);
+            const index = Math.floor(exactIndex);
+            const nextIndex = Math.min(index + 1, routeWaypoints.length - 1);
+            const fraction = exactIndex - index;
+
+            const current = routeWaypoints[index];
+            const next = routeWaypoints[nextIndex];
+            const head = new google.maps.LatLng(
+              current.lat + (next.lat - current.lat) * fraction,
+              current.lng + (next.lng - current.lng) * fraction
+            );
+
+            bikeMarker.setPosition(head);
+
+            while (coveredIndex < index) {
+              coveredIndex++;
+              coveredPath.push(toLatLng(routeWaypoints[coveredIndex]));
+            }
+            traveledPath.setPath(coveredPath.concat([head]));
+
+            setPill(
+              '🛵 ' + formatDistance(progress * totalDistance) +
+              ' of ' + formatDistance(totalDistance) + ' covered'
+            );
+          }, UPDATE_INTERVAL);
+        }
+
+        function applyPhase(phase) {
+          currentPhase = phase;
+          // Route not back yet; the directions callback re-applies on arrival.
+          if (routeWaypoints.length < 2) return;
+
+          if (phase === 'delivered') {
+            showDelivered();
+          } else if (phase === 'moving') {
+            startRide();
+          } else {
+            showWaiting();
+          }
+        }
+
+        window.setPhase = applyPhase;
 
         // Function to decode polyline (Google's algorithm)
         function decodePolyline(encoded) {
@@ -330,7 +433,7 @@ export default function MapView({
               const infoEl = document.querySelector('.route-info');
               if (infoEl) {
                 infoEl.innerHTML =
-                  distance + '<br>' + formatDuration(rideTimeMs(distanceMeters));
+                  distance + '<br>' + formatDuration(RIDE_DURATION_MS);
               }
 
               // Extract waypoints from polyline (follows actual road)
@@ -351,110 +454,12 @@ export default function MapView({
               console.log('Waypoints extracted:', waypoints.length);
               console.log('Total distance:', distanceMeters, 'meters');
 
-              const progressPill = document.querySelector('.progress-pill');
+              routeWaypoints = waypoints;
+              totalDistance = distanceMeters;
 
-              if (PHASE !== 'moving') {
-                // Not en route: park the bike at whichever end matches the phase
-                // and skip the animation entirely.
-                const done = PHASE === 'delivered';
-                const at = done ? waypoints[waypoints.length - 1] : waypoints[0];
-                bikeMarker.setPosition(new google.maps.LatLng(at.lat, at.lng));
-                if (done) {
-                  traveledPath.setPath(
-                    waypoints.map(p => new google.maps.LatLng(p.lat, p.lng))
-                  );
-                }
-                if (progressPill) {
-                  progressPill.innerText = done
-                    ? '✅ Delivered • ' + formatDistance(distanceMeters) + ' covered'
-                    : '📦 Packing your order';
-                }
-              } else if (waypoints.length > 1) {
-                // Calculate total time in milliseconds
-                totalDistance = distanceMeters;
-                const totalTimeMs = rideTimeMs(totalDistance);
-
-                console.log('Total time:', totalTimeMs / 1000, 'seconds');
-
-                const progressEl = document.querySelector('.progress-pill');
-                let startTime = Date.now();
-                let isAnimating = true;
-
-                // Confirmed waypoints behind the bike; the moving head is appended
-                // each tick rather than rebuilding the whole array.
-                let coveredIndex = 0;
-                let coveredPath = [new google.maps.LatLng(waypoints[0].lat, waypoints[0].lng)];
-
-                const animateBike = setInterval(() => {
-                  if (!isAnimating) {
-                    clearInterval(animateBike);
-                    return;
-                  }
-
-                  const elapsedMs = Date.now() - startTime;
-                  const progress = elapsedMs / totalTimeMs;
-
-                  if (progress >= 1) {
-                    // Arrived: settle on the destination and stop for good.
-                    isAnimating = false;
-                    clearInterval(animateBike);
-
-                    const last = waypoints[waypoints.length - 1];
-                    const end = new google.maps.LatLng(last.lat, last.lng);
-                    bikeMarker.setPosition(end);
-                    traveledPath.setPath(
-                      waypoints.map(p => new google.maps.LatLng(p.lat, p.lng))
-                    );
-
-                    if (progressEl) {
-                      progressEl.innerText =
-                        '✅ Delivered • ' + formatDistance(totalDistance) + ' covered';
-                    }
-
-                    if (window.ReactNativeWebView) {
-                      window.ReactNativeWebView.postMessage(
-                        JSON.stringify({ action: 'delivered' })
-                      );
-                    }
-                    return;
-                  }
-
-                  // Calculate waypoint index based on progress
-                  const currentWaypointIndex = progress * (waypoints.length - 1);
-                  const index = Math.floor(currentWaypointIndex);
-                  const nextIndex = Math.min(index + 1, waypoints.length - 1);
-                  const fraction = currentWaypointIndex - index;
-
-                  if (index < waypoints.length) {
-                    const current = waypoints[index];
-                    const next = waypoints[nextIndex];
-
-                    // Interpolate position
-                    const lat = current.lat + (next.lat - current.lat) * fraction;
-                    const lng = current.lng + (next.lng - current.lng) * fraction;
-                    const head = new google.maps.LatLng(lat, lng);
-
-                    bikeMarker.setPosition(head);
-
-                    while (coveredIndex < index) {
-                      coveredIndex++;
-                      coveredPath.push(
-                        new google.maps.LatLng(waypoints[coveredIndex].lat, waypoints[coveredIndex].lng)
-                      );
-                    }
-                    traveledPath.setPath(coveredPath.concat([head]));
-
-                    if (progressEl) {
-                      const coveredMeters = progress * totalDistance;
-                      progressEl.innerText =
-                        '🚲 ' + formatDistance(coveredMeters) +
-                        ' of ' + formatDistance(totalDistance) + ' covered';
-                    }
-                  }
-                }, UPDATE_INTERVAL);
-              } else {
-                console.log('Not enough waypoints to animate');
-              }
+              // The route is what the phases operate on, so nothing can be drawn
+              // until it arrives. Apply whichever phase is current now.
+              applyPhase(currentPhase);
             }
           }
         );
@@ -470,11 +475,26 @@ export default function MapView({
       deliveryLng,
       storeAddress,
       deliveryAddress,
-      phase,
+      rideDurationMs,
+      elapsedMs,
+      // `phase` is deliberately NOT a dependency — it is pushed into the running
+      // page via injectJavaScript below. Adding it here reloads the WebView.
     ],
   );
 
   const source = useMemo(() => ({ html: htmlContent }), [htmlContent]);
+
+  // react-native-webview 14 declares WebView as a plain FunctionComponent, so its
+  // imperative handle is missing from the types despite existing at runtime.
+  const webViewRef = useRef<{ injectJavaScript: (script: string) => void }>(null);
+
+  // Tell the already-loaded page about the new phase rather than rebuilding it.
+  // Harmless before the route resolves: setPhase records it and re-applies.
+  useEffect(() => {
+    webViewRef.current?.injectJavaScript(
+      `window.setPhase && window.setPhase('${phase}'); true;`,
+    );
+  }, [phase]);
 
   return (
     <View style={[styles.container, { height }]}>
@@ -490,6 +510,7 @@ export default function MapView({
         </View>
       ) : (
         <WebView
+          ref={webViewRef as React.Ref<never>}
           source={source}
           style={styles.webView}
           scrollEnabled={false}

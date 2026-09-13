@@ -4,6 +4,7 @@ import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {StyleSheet, Text} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import {useAppSelector} from '../store';
 import HomeScreen from '../screens/home/HomeScreen';
 import ProductDetailScreen from '../screens/productDetail/ProductDetailScreen';
 import CartScreen from '../screens/cart/CartScreen';
@@ -24,7 +25,16 @@ function HomeStack() {
     <Stack.Navigator screenOptions={{headerShown: false}}>
       <Stack.Screen name="HomeMain" component={HomeScreen} />
       <Stack.Screen name="ProductDetail" component={ProductDetailScreen} />
-      <Stack.Screen name="Cart" component={CartScreen} />
+    </Stack.Navigator>
+  );
+}
+
+// Checkout lives here rather than in HomeStack: it follows on from the cart, so
+// backing out of it should land on the cart.
+function CartStack() {
+  return (
+    <Stack.Navigator screenOptions={{headerShown: false}}>
+      <Stack.Screen name="CartMain" component={CartScreen} />
       <Stack.Screen name="Checkout" component={CheckoutScreen} />
     </Stack.Navigator>
   );
@@ -50,6 +60,9 @@ function TabNavigator() {
     {height: TAB_BAR_HEIGHT + insets.bottom},
   ];
 
+  // Sum of quantities, so 3 of one product badges as 3 rather than 1.
+  const cartCount = useAppSelector(state => state.cart.totalItems);
+
   return (
     <Tab.Navigator
       screenOptions={{
@@ -67,6 +80,17 @@ function TabNavigator() {
           tabBarIcon: ({color}) => (
             <Text style={{fontSize: 24, color}}>🏠</Text>
           ),
+        }}
+      />
+      <Tab.Screen
+        name="Cart"
+        component={CartStack}
+        options={{
+          tabBarLabel: 'Cart',
+          tabBarIcon: ({color}) => (
+            <Text style={{fontSize: 24, color}}>🛒</Text>
+          ),
+          tabBarBadge: cartCount > 0 ? cartCount : undefined,
         }}
       />
       <Tab.Screen

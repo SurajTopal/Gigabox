@@ -45,17 +45,6 @@ export const styles = StyleSheet.create({
     fontSize: 14,
     color: COLORS.text,
   },
-  filterButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 8,
-    backgroundColor: '#f3f4f6',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  filterIcon: {
-    fontSize: 18,
-  },
   productCard: {
     backgroundColor: 'white',
     borderRadius: 12,

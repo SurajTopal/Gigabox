@@ -1,4 +1,4 @@
-import React, { useCallback, useState, useRef, useEffect } from 'react';
+import React, { useCallback, useState, useRef, useEffect, useMemo } from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator, Image, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -6,8 +6,8 @@ import Toast from 'react-native-toast-message';
 import { FlashList } from '@shopify/flash-list';
 import Header from '../../components/Header';
 import { useProducts } from '../../hooks/useProducts';
-import { useAppDispatch } from '../../store';
-import { addToCart } from '../../store/slices/cartSlice';
+import { useAppDispatch, useAppSelector } from '../../store';
+import { addToCart, updateQuantity } from '../../store/slices/cartSlice';
 import { getDiscountedPrice } from '../../utils/price';
 import { styles } from './HomeScreen.styles';
 
@@ -21,35 +21,30 @@ interface ProductCardProps {
   discountPercentage: number;
   onNavigate: (id: number) => void;
   onAddToCart: (id: number, title: string, price: number, quantity: number) => void;
+  onSetQuantity: (id: number, quantity: number) => void;
+  cartQuantity: number;
 }
 
 // Modern product card with image and discount
 const ProductCard = React.memo(
-  ({ id, title, price, rating, stock, thumbnail, discountPercentage, onNavigate, onAddToCart }: ProductCardProps) => {
+  ({ id, title, price, rating, stock, thumbnail, discountPercentage, onNavigate, onAddToCart, onSetQuantity, cartQuantity }: ProductCardProps) => {
     const inStock = stock > 0;
     const [imageError, setImageError] = useState(false);
-    const [quantity, setQuantity] = useState(1);
     const discountedPrice = getDiscountedPrice(price, discountPercentage);
 
-    // FlashList recycles this instance across products, so per-item state has to
-    // be reset when the view is handed a different product.
+    // Only imageError is local now — the quantity comes from the cart, so there
+    // is nothing else for FlashList's recycling to carry across products.
     const [renderedId, setRenderedId] = useState(id);
     if (renderedId !== id) {
       setRenderedId(id);
-      setQuantity(1);
       setImageError(false);
     }
 
-    // Handle quantity change
-    const handleDecrement = () => {
-      if (quantity > 1) {
-        setQuantity(quantity - 1);
-      }
-    };
+    const handleDecrement = () => onSetQuantity(id, cartQuantity - 1);
 
     const handleIncrement = () => {
-      if (quantity < stock) {
-        setQuantity(quantity + 1);
+      if (cartQuantity < stock) {
+        onSetQuantity(id, cartQuantity + 1);
       } else {
         Toast.show({
           type: 'info',
@@ -59,7 +54,7 @@ const ProductCard = React.memo(
     };
 
     const handleAddToCart = () => {
-      onAddToCart(id, title, discountedPrice, quantity);
+      onAddToCart(id, title, discountedPrice, 1);
     };
 
     return (
@@ -116,29 +111,32 @@ const ProductCard = React.memo(
 
           {/* Quantity & Add to Cart */}
           <View style={styles.cartSection}>
-            {/* Quantity Control */}
-            <View style={styles.quantityControl}>
+            {cartQuantity > 0 ? (
+              // Already in the cart: the stepper edits the cart directly, so the
+              // number on the card is always the real one.
+              <View style={styles.quantityControl}>
+                <TouchableOpacity
+                  style={styles.quantityButton}
+                  onPress={handleDecrement}>
+                  <Text style={styles.quantityButtonText}>−</Text>
+                </TouchableOpacity>
+                <Text style={styles.quantityValue}>{cartQuantity}</Text>
+                <TouchableOpacity
+                  style={styles.quantityButton}
+                  onPress={handleIncrement}>
+                  <Text style={styles.quantityButtonText}>+</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
               <TouchableOpacity
-                style={styles.quantityButton}
-                onPress={handleDecrement}
-                disabled={quantity <= 1}>
-                <Text style={styles.quantityButtonText}>−</Text>
+                style={[styles.addToCartBtn, !inStock && styles.addToCartBtnDisabled]}
+                onPress={handleAddToCart}
+                disabled={!inStock}>
+                <Text style={styles.addToCartBtnText}>
+                  {inStock ? 'Add' : 'Out of stock'}
+                </Text>
               </TouchableOpacity>
-              <Text style={styles.quantityValue}>{quantity}</Text>
-              <TouchableOpacity
-                style={styles.quantityButton}
-                onPress={handleIncrement}>
-                <Text style={styles.quantityButtonText}>+</Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Add to Cart Button */}
-            <TouchableOpacity
-              style={[styles.addToCartBtn, !inStock && styles.addToCartBtnDisabled]}
-              onPress={handleAddToCart}
-              disabled={!inStock}>
-              <Text style={styles.addToCartBtnText}>Add</Text>
-            </TouchableOpacity>
+            )}
           </View>
         </View>
       </TouchableOpacity>
@@ -167,20 +165,34 @@ export default function HomeScreen() {
     [navigation],
   );
 
-  // Add to cart and navigate
+  // Stays on the list: the card turns into a stepper, so there's somewhere to go
+  // next without yanking the user to the cart after every tap.
   const handleAddToCart = useCallback(
     (id: number, title: string, price: number, quantity: number) => {
       dispatch(
-        addToCart({
-          id: id.toString(),
-          name: title,
-          price,
-          quantity,
-        }),
+        addToCart({ id: id.toString(), name: title, price, quantity }),
       );
-      navigation.navigate('Cart');
     },
-    [dispatch, navigation],
+    [dispatch],
+  );
+
+  const handleSetQuantity = useCallback(
+    (id: number, quantity: number) => {
+      dispatch(updateQuantity({ id: id.toString(), quantity }));
+    },
+    [dispatch],
+  );
+
+  // id -> quantity, so a card can look itself up without every card subscribing
+  // to the whole cart. Rebuilt only when the cart actually changes.
+  const cartItems = useAppSelector(state => state.cart.items);
+  const cartQuantities = useMemo(
+    () =>
+      cartItems.reduce<Record<string, number>>((map, item) => {
+        map[item.id] = item.quantity;
+        return map;
+      }, {}),
+    [cartItems],
   );
 
   // Handle search with debounce (500ms)
@@ -238,15 +250,12 @@ export default function HomeScreen() {
         discountPercentage={item.discountPercentage}
         onNavigate={handleProductPress}
         onAddToCart={handleAddToCart}
+        onSetQuantity={handleSetQuantity}
+        cartQuantity={cartQuantities[item.id.toString()] ?? 0}
       />
     ),
-    [handleProductPress, handleAddToCart],
+    [handleProductPress, handleAddToCart, handleSetQuantity, cartQuantities],
   );
-
-  const handleFilterPress = () => {
-    console.log('Filter pressed');
-    // TODO: Open filter modal/sheet
-  };
 
   // Loading indicator at bottom
   const renderFooter = () => {
@@ -309,9 +318,6 @@ export default function HomeScreen() {
             returnKeyType="search"
           />
         </View>
-        <TouchableOpacity style={styles.filterButton} onPress={handleFilterPress}>
-          <Text style={styles.filterIcon}>⚙️</Text>
-        </TouchableOpacity>
       </View>
 
       {/* Product list */}

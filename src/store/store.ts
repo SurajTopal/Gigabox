@@ -5,6 +5,8 @@ import ordersReducer from './slices/ordersSlice';
 import productReducer from './slices/productSlice';
 import { orderProgressMiddleware } from './orderProgress';
 import { userPersistenceMiddleware } from './userPersistence';
+import { orderPersistenceMiddleware } from './orderPersistence';
+import { orderNotificationsMiddleware } from './orderNotifications';
 
 export const store = configureStore({
   reducer: {
@@ -17,6 +19,8 @@ export const store = configureStore({
     getDefaultMiddleware().prepend(
       orderProgressMiddleware.middleware,
       userPersistenceMiddleware.middleware,
+      orderPersistenceMiddleware.middleware,
+      orderNotificationsMiddleware.middleware,
     ),
 });
 

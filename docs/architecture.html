@@ -1,0 +1,210 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Gigabox Mini — Architecture</title>
+<style>
+  @page { size: A4; margin: 14mm; }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    color: #111827; margin: 0; font-size: 11px; line-height: 1.45;
+  }
+  h1 { font-size: 21px; margin: 0 0 2px; letter-spacing: -0.3px; }
+  .sub { color: #6b7280; font-size: 11px; margin-bottom: 16px; }
+  h2 { font-size: 13px; margin: 0 0 9px; padding-bottom: 5px; border-bottom: 2px solid #111827; }
+  .page { page-break-after: always; }
+  .page:last-child { page-break-after: auto; }
+
+  .layer { border: 1.5px solid #d1d5db; border-radius: 8px; padding: 9px 11px; margin-bottom: 7px; }
+  .layer-name { font-weight: 700; font-size: 11px; margin-bottom: 6px; }
+  .layer-name span { font-weight: 400; color: #6b7280; }
+  .boxes { display: flex; gap: 6px; flex-wrap: wrap; }
+  .box {
+    flex: 1; min-width: 92px; border-radius: 5px; padding: 6px 7px;
+    font-size: 10px; text-align: center; border: 1px solid;
+  }
+  .b-blue   { background:#EAF2FE; border-color:#9dbdf5; }
+  .b-orange { background:#FDF1E3; border-color:#f0c089; }
+  .b-purple { background:#EEEBFB; border-color:#c0b2f0; }
+  .b-green  { background:#E7F6EC; border-color:#94d2ac; }
+  .b-grey   { background:#f3f4f6; border-color:#d1d5db; }
+  .box b { display:block; font-size:10.5px; }
+  .box i { font-style: normal; color:#6b7280; font-size:9px; }
+  .arrow { text-align:center; color:#9ca3af; font-size:13px; margin:1px 0; }
+
+  table { width:100%; border-collapse:collapse; font-size:10px; margin-top:4px; }
+  th, td { text-align:left; padding:4px 7px; border-bottom:1px solid #e5e7eb; vertical-align:top; }
+  th { background:#f9fafb; font-size:9.5px; text-transform:uppercase; letter-spacing:.4px; color:#6b7280; }
+  code { font-family: ui-monospace, Menlo, monospace; font-size:9.5px; background:#f3f4f6; padding:1px 3px; border-radius:3px; }
+
+  .flow { display:flex; align-items:stretch; gap:5px; margin:9px 0; }
+  .step { flex:1; border-radius:6px; padding:7px 6px; text-align:center; border:1.5px solid; }
+  .step b { display:block; font-size:10.5px; margin-bottom:2px; }
+  .step i { font-style:normal; font-size:9px; color:#4b5563; }
+  .chev { align-self:center; color:#9ca3af; font-size:14px; }
+
+  .note { background:#f9fafb; border-left:3px solid #111827; padding:7px 10px; margin:9px 0; font-size:10px; }
+  .note b { display:block; margin-bottom:2px; }
+  .two { display:flex; gap:10px; }
+  .two > div { flex:1; }
+  .k { font-size:10px; margin:3px 0; }
+  .k b { color:#111827; }
+</style>
+</head>
+<body>
+
+<!-- ─────────────── PAGE 1 ─────────────── -->
+<div class="page">
+  <h1>Gigabox Mini — Architecture</h1>
+  <div class="sub">React Native 0.87 · TypeScript · Redux Toolkit · FlashList · Google Maps (WebView)</div>
+
+  <h2>Layers</h2>
+
+  <div class="layer">
+    <div class="layer-name">Screens <span>— render state, dispatch actions. No business logic.</span></div>
+    <div class="boxes">
+      <div class="box b-grey"><b>Home</b><i>catalogue + search</i></div>
+      <div class="box b-grey"><b>Product</b><i>detail</i></div>
+      <div class="box b-grey"><b>Cart</b><i>+ Checkout</i></div>
+      <div class="box b-grey"><b>Orders</b><i>+ tracking map</i></div>
+      <div class="box b-grey"><b>Account</b><i>profile</i></div>
+    </div>
+  </div>
+
+  <div class="arrow">▼ &nbsp; dispatch &nbsp; / &nbsp; subscribe &nbsp; ▲</div>
+
+  <div class="layer">
+    <div class="layer-name">Redux Store <span>— the single source of truth</span></div>
+    <div class="boxes">
+      <div class="box b-blue"><b>products</b><i>catalogue, paging</i></div>
+      <div class="box b-blue"><b>cart</b><i>items, totals</i></div>
+      <div class="box b-blue"><b>orders</b><i>status, history</i></div>
+      <div class="box b-blue"><b>user</b><i>profile</i></div>
+    </div>
+  </div>
+
+  <div class="arrow">▼</div>
+
+  <div class="layer">
+    <div class="layer-name">Listener Middleware <span>— side effects, running independently of any screen</span></div>
+    <div class="boxes">
+      <div class="box b-orange"><b>orderProgress</b><i>advances status on a timer</i></div>
+      <div class="box b-orange"><b>orderPersistence</b><i>saves orders</i></div>
+      <div class="box b-orange"><b>userPersistence</b><i>saves profile</i></div>
+      <div class="box b-orange"><b>orderNotifications</b><i>schedules alerts</i></div>
+    </div>
+  </div>
+
+  <div class="arrow">▼</div>
+
+  <div class="layer">
+    <div class="layer-name">External <span>— outside the app</span></div>
+    <div class="boxes">
+      <div class="box b-green"><b>dummyjson.com</b><i>product API</i></div>
+      <div class="box b-green"><b>Google Maps</b><i>route + map</i></div>
+      <div class="box b-green"><b>AsyncStorage</b><i>on-device</i></div>
+      <div class="box b-green"><b>Notifee</b><i>notifications</i></div>
+    </div>
+  </div>
+
+  <div class="note">
+    <b>Why middleware instead of screen code?</b>
+    An order must keep progressing when you're on another tab, or the app is closed.
+    Putting that logic in a screen ties it to that screen being open. In the store, it
+    survives navigation — and the map becomes a <i>display</i> of state, not the driver of it.
+  </div>
+
+  <h2 style="margin-top:14px">Two rules worth mentioning</h2>
+  <div class="two">
+    <div>
+      <div class="k"><b>1. Compute once.</b> The discount, the delivery fee and the order total
+      each live in exactly one function (<code>utils/price.ts</code>).</div>
+      <div class="k" style="color:#6b7280">Three real bugs came from one number being calculated
+      in two places and drifting — the cart quoted ₹50 while checkout charged ₹90.</div>
+    </div>
+    <div>
+      <div class="k"><b>2. Derive, don't store.</b> An order saves one timestamp
+      (<code>placedAt</code>). Its status is calculated from elapsed time.</div>
+      <div class="k" style="color:#6b7280">So closing the app is safe — nothing has to keep
+      running, because the answer comes from the clock.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ─────────────── PAGE 2 ─────────────── -->
+<div class="page">
+  <h1>Order Flow</h1>
+  <div class="sub">What happens from tapping “Add” to seeing “Delivered”</div>
+
+  <h2>1 · Browse → Cart</h2>
+  <div class="flow">
+    <div class="step b-grey"><b>Home list</b><i>FlashList, 30 per page</i></div>
+    <div class="chev">›</div>
+    <div class="step b-grey"><b>Tap Add</b><i>dispatch to cart</i></div>
+    <div class="chev">›</div>
+    <div class="step b-grey"><b>Card becomes − 1 +</b><i>reads cart, not local state</i></div>
+    <div class="chev">›</div>
+    <div class="step b-grey"><b>Cart tab badge</b><i>updates live</i></div>
+  </div>
+  <div style="font-size:10px;color:#6b7280">Home, product detail and cart all show the
+  <b>same number</b> for a product, because all three read it from the cart.</div>
+
+  <h2 style="margin-top:15px">2 · Checkout → Order created</h2>
+  <div class="flow">
+    <div class="step b-grey"><b>Checkout</b><i>no form — uses saved profile</i></div>
+    <div class="chev">›</div>
+    <div class="step b-grey"><b>Place Order</b><i>records <code>placedAt</code></i></div>
+    <div class="chev">›</div>
+    <div class="step b-grey"><b>Saved to storage</b><i>survives app close</i></div>
+    <div class="chev">›</div>
+    <div class="step b-grey"><b>Opens tracking</b><i>success modal on top</i></div>
+  </div>
+
+  <h2 style="margin-top:15px">3 · Delivery timeline</h2>
+  <div class="flow">
+    <div class="step b-blue"><b>Placed</b><i>0s</i></div>
+    <div class="chev">›</div>
+    <div class="step b-orange"><b>Packed</b><i>+30s</i></div>
+    <div class="chev">›</div>
+    <div class="step b-purple"><b>Out for delivery</b><i>+45s · bike rides</i></div>
+    <div class="chev">›</div>
+    <div class="step b-green"><b>Delivered</b><i>+1m 45s</i></div>
+  </div>
+
+  <table>
+    <tr><th style="width:26%">Question</th><th>Answer</th></tr>
+    <tr><td>Who moves the status?</td><td><code>orderProgress</code> middleware in the store — not the screen</td></tr>
+    <tr><td>If I switch tabs?</td><td>Keeps progressing. Nothing is tied to the screen being open.</td></tr>
+    <tr><td>If I close the app?</td><td>Timers die — but on reopen the status is <b>recalculated</b> from <code>placedAt</code>. Closed for 10 minutes → shows Delivered instantly.</td></tr>
+    <tr><td>What does the map do?</td><td>Only draws. It receives a <code>phase</code> (waiting / moving / delivered) and animates. It never decides when delivery completes.</td></tr>
+  </table>
+
+  <h2 style="margin-top:15px">4 · The tracking map</h2>
+  <div class="flow">
+    <div class="step b-grey"><b>WebView</b><i>hosts Google Maps JS</i></div>
+    <div class="chev">›</div>
+    <div class="step b-grey"><b>Directions API</b><i>real driving route</i></div>
+    <div class="chev">›</div>
+    <div class="step b-grey"><b>Decode polyline</b><i>~500 points, follows road</i></div>
+    <div class="chev">›</div>
+    <div class="step b-grey"><b>Animate scooter</b><i>green trail behind</i></div>
+  </div>
+
+  <div class="note">
+    <b>Worth mentioning if asked about tricky parts</b>
+    Status changes are pushed into the running page with <code>injectJavaScript</code> rather
+    than rebuilding its HTML. Rebuilding reloaded the whole map — which destroyed the animation
+    and re-billed a Directions request on every status change.
+  </div>
+
+  <div class="note" style="border-left-color:#6b7280">
+    <b>Known limits (be upfront)</b>
+    No backend — orders live on the device. Store and delivery locations are hardcoded, so every
+    order draws the same route. Notifications arrive on reopen rather than while closed, because
+    Android batches deferred background work; surviving a force-stop needs server-sent push.
+  </div>
+</div>
+
+</body>
+</html>

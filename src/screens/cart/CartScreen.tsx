@@ -69,7 +69,8 @@ export default function CartScreen({ navigation }: CartScreenProps) {
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
-      <Header title="My Cart" showBack onBackPress={() => navigation.goBack()} />
+      {/* A tab root has nothing beneath it, so no back arrow. */}
+      <Header title="My Cart" />
 
       {cartItems.length > 0 ? (
         <>
@@ -123,7 +124,7 @@ export default function CartScreen({ navigation }: CartScreenProps) {
           <View style={{ width: '70%' }}>
             <Button
               text="Continue Shopping"
-              onPress={() => navigation.goBack()}
+              onPress={() => navigation.navigate('Home', { screen: 'HomeMain' })}
               variant="primary"
               size="medium"
               fullWidth

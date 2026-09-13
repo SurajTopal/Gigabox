@@ -7,6 +7,9 @@ import RootNavigator from './src/navigation/RootNavigator';
 import { store } from './src/store';
 import { hydrateUser } from './src/store/slices/userSlice';
 import { loadStoredProfile } from './src/store/userPersistence';
+import { hydrateOrders } from './src/store/slices/ordersSlice';
+import { loadStoredOrders } from './src/store/orderPersistence';
+import { initNotifications } from './src/services/notifications';
 
 function App() {
   // Held back until the saved profile is applied, so the UI never renders the
@@ -14,10 +17,19 @@ function App() {
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    loadStoredProfile()
-      .then(saved => {
-        if (saved) {
-          store.dispatch(hydrateUser(saved));
+    // Asks for notification permission and creates the channel. Not awaited with
+    // the rest — the app shouldn't be held behind a permission dialog.
+    initNotifications();
+
+    Promise.all([loadStoredProfile(), loadStoredOrders()])
+      .then(([profile, orders]) => {
+        if (profile) {
+          store.dispatch(hydrateUser(profile));
+        }
+        // Recomputes each status from elapsed time and re-arms whatever is still
+        // in flight, so orders that advanced while the app was closed are correct.
+        if (orders) {
+          store.dispatch(hydrateOrders(orders));
         }
       })
       .finally(() => setHydrated(true));
