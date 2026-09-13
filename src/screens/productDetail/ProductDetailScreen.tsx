@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
 import Header from '../../components/Header';
 import { useProductDetails } from '../../hooks/useProducts';
-import { useAppDispatch } from '../../store';
-import { addToCart } from '../../store/slices/cartSlice';
+import { useAppDispatch, useAppSelector } from '../../store';
+import { addToCart, updateQuantity } from '../../store/slices/cartSlice';
 import { getDiscountedPrice } from '../../utils/price';
 import { styles } from './ProductDetailScreen.styles';
 
@@ -18,7 +18,12 @@ export default function ProductDetailScreen({ route, navigation }: ProductDetail
   const dispatch = useAppDispatch();
   const { productId } = route.params;
   const { selectedProduct, loading, error } = useProductDetails(productId);
-  const [quantity, setQuantity] = useState(1);
+  // Read from the cart, not local state, so this screen, the home cards and the
+  // cart always show the same number for the same product.
+  const cartQuantity = useAppSelector(
+    state =>
+      state.cart.items.find(i => i.id === String(productId))?.quantity ?? 0,
+  );
 
   const handleAddToCart = () => {
     if (selectedProduct) {
@@ -30,10 +35,9 @@ export default function ProductDetailScreen({ route, navigation }: ProductDetail
             selectedProduct.price,
             selectedProduct.discountPercentage,
           ),
-          quantity,
+          quantity: 1,
         }),
       );
-      navigation.navigate('Cart');
     }
   };
 
@@ -121,38 +125,51 @@ export default function ProductDetailScreen({ route, navigation }: ProductDetail
             </View>
           </View>
 
-          {/* Quantity Control */}
-          <View style={styles.quantityContainer}>
+          {cartQuantity > 0 ? (
+            <View style={styles.quantityContainer}>
+              <TouchableOpacity
+                style={styles.quantityButton}
+                onPress={() =>
+                  dispatch(
+                    updateQuantity({
+                      id: product.id.toString(),
+                      quantity: cartQuantity - 1,
+                    }),
+                  )
+                }>
+                <Text style={styles.quantityButtonText}>−</Text>
+              </TouchableOpacity>
+              <Text style={styles.quantityValue}>{cartQuantity}</Text>
+              <TouchableOpacity
+                style={styles.quantityButton}
+                onPress={() => {
+                  if (cartQuantity < product.stock) {
+                    dispatch(
+                      updateQuantity({
+                        id: product.id.toString(),
+                        quantity: cartQuantity + 1,
+                      }),
+                    );
+                  } else {
+                    Toast.show({
+                      type: 'info',
+                      text1: `Max quantity - Only ${product.stock} available`,
+                    });
+                  }
+                }}>
+                <Text style={styles.quantityButtonText}>+</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
             <TouchableOpacity
-              style={styles.quantityButton}
-              onPress={() => setQuantity(Math.max(1, quantity - 1))}
-              disabled={quantity <= 1}>
-              <Text style={styles.quantityButtonText}>−</Text>
+              style={[styles.addToCartButton, !product.stock && styles.buttonDisabled]}
+              disabled={!product.stock}
+              onPress={handleAddToCart}>
+              <Text style={styles.addToCartText}>
+                {product.stock ? 'Add to Cart' : 'Out of stock'}
+              </Text>
             </TouchableOpacity>
-            <Text style={styles.quantityValue}>{quantity}</Text>
-            <TouchableOpacity
-              style={styles.quantityButton}
-              onPress={() => {
-                if (quantity < product.stock) {
-                  setQuantity(quantity + 1);
-                } else {
-                  Toast.show({
-                    type: 'info',
-                    text1: `Max quantity - Only ${product.stock} available`,
-                  });
-                }
-              }}>
-              <Text style={styles.quantityButtonText}>+</Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* Add to Cart Button */}
-          <TouchableOpacity
-            style={[styles.addToCartButton, !product.stock && styles.buttonDisabled]}
-            disabled={!product.stock}
-            onPress={handleAddToCart}>
-            <Text style={styles.addToCartText}>Add to Cart</Text>
-          </TouchableOpacity>
+          )}
 
           {/* Reviews Section */}
           {product.reviews && product.reviews.length > 0 && (

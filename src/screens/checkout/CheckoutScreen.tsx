@@ -52,6 +52,7 @@ export default function CheckoutScreen({ navigation }: CheckoutScreenProps) {
         deliveryCharges,
         totalAmount: finalTotal,
         status: 'PLACED',
+        placedAt: Date.now(),
         items: cartItems,
         customer: {
           name: profile.name,
