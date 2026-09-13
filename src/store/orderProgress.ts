@@ -1,34 +1,83 @@
-import { createListenerMiddleware } from '@reduxjs/toolkit';
-import type { RootState } from './store';
+import {
+  createListenerMiddleware,
+  type ListenerEffectAPI,
+} from '@reduxjs/toolkit';
+import type { RootState, AppDispatch } from './store';
 import {
   addOrder,
+  hydrateOrders,
   updateOrderStatus,
-  PACKED_AFTER_MS,
-  OUT_FOR_DELIVERY_AFTER_MS,
+  PACKED_AT_MS,
+  OUT_FOR_DELIVERY_AT_MS,
+  DELIVERED_AT_MS,
 } from './slices/ordersSlice';
 
 export const orderProgressMiddleware = createListenerMiddleware();
 
-// Advances a new order PLACED -> PACKED -> OUT_FOR_DELIVERY on a timer. Lives in
-// the store rather than a screen so progress continues wherever the user is.
-// DELIVERED is not scheduled here: the map reports it when the bike arrives.
+type Api = ListenerEffectAPI<RootState, AppDispatch>;
+
+// Walks one order through its remaining stages. Every wait is measured from
+// placedAt rather than from "now", so an order restored from storage picks up
+// exactly where it should be instead of restarting its timeline.
+function scheduleOrder(id: string, placedAt: number, api: Api) {
+  const statusOf = () =>
+    (api.getState() as RootState).orders.orders.find(o => o.id === id)?.status;
+
+  // autoJoin is essential: without it RTK aborts the fork the moment the parent
+  // effect returns, so every timer would be cancelled before it could fire.
+  api.fork(async forkApi => {
+    const waitUntil = async (offsetMs: number) => {
+      const remaining = placedAt + offsetMs - Date.now();
+      if (remaining > 0) {
+        await forkApi.delay(remaining);
+      }
+    };
+
+    try {
+      await waitUntil(PACKED_AT_MS);
+      if (statusOf() === 'PLACED') {
+        api.dispatch(updateOrderStatus({ id, status: 'PACKED' }));
+      }
+
+      await waitUntil(OUT_FOR_DELIVERY_AT_MS);
+      if (statusOf() === 'PACKED') {
+        api.dispatch(updateOrderStatus({ id, status: 'OUT_FOR_DELIVERY' }));
+      }
+
+      await waitUntil(DELIVERED_AT_MS);
+      if (statusOf() === 'OUT_FOR_DELIVERY') {
+        api.dispatch(updateOrderStatus({ id, status: 'DELIVERED' }));
+      }
+    } catch {
+      // Cancelled (the fork was torn down) — nothing to clean up.
+    }
+  }, { autoJoin: true });
+}
+
+// A freshly placed order.
 orderProgressMiddleware.startListening({
   actionCreator: addOrder,
   effect: async (_action, listenerApi) => {
-    // addOrder unshifts, and the reducer may have generated the id itself.
-    const id = (listenerApi.getState() as RootState).orders.orders[0]?.id;
-    if (!id) return;
+    const newest = (listenerApi.getState() as RootState).orders.orders[0];
+    if (newest?.placedAt) {
+      scheduleOrder(newest.id, newest.placedAt, listenerApi as Api);
+    }
+  },
+});
 
-    const statusOf = () =>
-      (listenerApi.getState() as RootState).orders.orders.find(o => o.id === id)
-        ?.status;
-
-    await listenerApi.delay(PACKED_AFTER_MS);
-    if (statusOf() !== 'PLACED') return;
-    listenerApi.dispatch(updateOrderStatus({ id, status: 'PACKED' }));
-
-    await listenerApi.delay(OUT_FOR_DELIVERY_AFTER_MS);
-    if (statusOf() !== 'PACKED') return;
-    listenerApi.dispatch(updateOrderStatus({ id, status: 'OUT_FOR_DELIVERY' }));
+// Orders restored from storage. hydrateOrders has already corrected each status
+// from elapsed time; this only re-arms whatever is genuinely still in flight.
+orderProgressMiddleware.startListening({
+  actionCreator: hydrateOrders,
+  effect: async (_action, listenerApi) => {
+    const { orders } = (listenerApi.getState() as RootState).orders;
+    orders
+      .filter(
+        o =>
+          o.placedAt &&
+          o.status !== 'DELIVERED' &&
+          o.status !== 'CANCELLED',
+      )
+      .forEach(o => scheduleOrder(o.id, o.placedAt, listenerApi as Api));
   },
 });
