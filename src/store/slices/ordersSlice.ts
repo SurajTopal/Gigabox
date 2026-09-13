@@ -24,6 +24,8 @@ export interface Order {
   id: string;
   date: string;
   itemsCount: number;
+  subtotal: number;
+  deliveryCharges: number;
   totalAmount: number;
   status: OrderStatus;
   items?: any[];
@@ -46,6 +48,8 @@ const initialState: OrdersState = {
       id: 'GB-98214',
       date: 'Sep 08, 2026',
       itemsCount: 3,
+      subtotal: 1499,
+      deliveryCharges: 0,
       totalAmount: 1499,
       status: 'DELIVERED',
     },
@@ -53,6 +57,8 @@ const initialState: OrdersState = {
       id: 'GB-97810',
       date: 'Sep 02, 2026',
       itemsCount: 1,
+      subtotal: 499,
+      deliveryCharges: 0,
       totalAmount: 499,
       status: 'DELIVERED',
     },

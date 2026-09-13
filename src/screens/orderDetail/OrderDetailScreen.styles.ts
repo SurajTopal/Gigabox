@@ -12,8 +12,8 @@ export const styles = StyleSheet.create({
     paddingTop: 12,
     paddingBottom: 12,
     backgroundColor: 'white',
-    borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
+    marginBottom:15,
   },
   detailsSection: {
     flex: 1,
@@ -269,40 +269,7 @@ export const styles = StyleSheet.create({
 
   // Action Buttons
   actionButtons: {
-    marginVertical: 24,
+    marginBottom:15,
   },
 
-  // Dialog
-  dialogOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  dialogBox: {
-    backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 20,
-    width: '85%',
-    maxWidth: 400,
-  },
-  dialogTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: COLORS.text,
-    marginBottom: 12,
-  },
-  dialogMessage: {
-    fontSize: 14,
-    color: '#6b7280',
-    lineHeight: 20,
-    marginBottom: 20,
-  },
-  dialogButtons: {
-    marginTop: 20,
-  },
 });

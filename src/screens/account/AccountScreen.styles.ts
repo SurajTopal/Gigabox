@@ -1,7 +1,51 @@
-import { StyleSheet } from 'react-native';
+import { StyleSheet, TextStyle, ViewStyle } from 'react-native';
 import { COLORS } from '../../utils/colors';
 
-export const styles = StyleSheet.create({
+type Styles = {
+  container:ViewStyle;
+  content:ViewStyle;
+  profileHeader:ViewStyle;
+  avatar:ViewStyle;
+  avatarText:TextStyle;
+  profileInfo:ViewStyle;
+  profileName:TextStyle;
+  profileEmail:TextStyle;
+  editButton:ViewStyle;
+  editButtonText:TextStyle;
+  statsContainer:ViewStyle;
+  statBox:ViewStyle;
+  statValue:TextStyle;
+  statLabel:TextStyle;
+  section:ViewStyle;
+  sectionTitle:TextStyle;
+  inputGroup:ViewStyle;
+  label:TextStyle;
+  input:TextStyle;
+  textAreaInput:TextStyle;
+  buttonGroup:ViewStyle;
+  detailBox:ViewStyle;
+  detailRow:ViewStyle;
+  detailLabel:TextStyle;
+  detailValue:TextStyle;
+  divider:ViewStyle;
+  linkBox:ViewStyle;
+  linkBoxMargin:ViewStyle;
+  linkIcon:TextStyle;
+  linkInfo:ViewStyle;
+  linkTitle:TextStyle;
+  linkSubtitle:TextStyle;
+  linkArrow:TextStyle;
+  settingRow:ViewStyle;
+  settingRowBorder:ViewStyle;
+  settingLabel:TextStyle;
+  settingToggle:TextStyle;
+  appInfo:ViewStyle;
+  appInfoText:TextStyle;
+  appInfoSubtext:TextStyle;
+};
+
+
+export const styles = StyleSheet.create<Styles>({
   container: {
     flex: 1,
     backgroundColor: COLORS.background,
@@ -148,6 +192,7 @@ export const styles = StyleSheet.create({
     fontSize: 13,
     color: COLORS.text,
     fontWeight: '500',
+    width:200,
   },
   divider: {
     height: 1,

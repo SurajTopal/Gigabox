@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Linking } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Header from '../../components/Header';
 import Button from '../../components/Button';
 import MapView from '../../components/MapView';
+import OrderSuccessModal from '../../components/OrderSuccessModal';
 import { GOOGLE_MAPS_API_KEY } from '../../config/apiConfig';
 import { useAppDispatch, useAppSelector } from '../../store';
 import {
@@ -69,30 +70,29 @@ const STATUS_TIMELINE: {
 ];
 
 export default function OrderDetailScreen({ route, navigation }: OrderDetailScreenProps) {
-  const { order: orderParam } = route.params;
+  const { order: orderParam, justPlaced } = route.params;
   const dispatch = useAppDispatch();
   // route.params holds a snapshot taken at navigation time, so the live row is
   // read from the store to pick up the status change on arrival.
   const order: Order =
     useAppSelector(state => state.orders.orders.find(o => o.id === orderParam.id)) ??
     orderParam;
-  const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [scrollEnabled, setScrollEnabled] = useState(true);
+  const [showSuccess, setShowSuccess] = useState(false);
+
+  // navigate() reuses an already-mounted OrderDetail and merges params, so this
+  // can't be a useState initialiser — that only runs for the first order.
+  useEffect(() => {
+    if (justPlaced) {
+      setShowSuccess(true);
+    }
+  }, [justPlaced, orderParam.id]);
 
   const getCurrentStatusIndex = () =>
     Math.max(
       STATUS_TIMELINE.findIndex(step => step.status === order.status),
       0,
     );
-
-  const canCancelOrder =
-    order.status !== 'DELIVERED' && order.status !== 'CANCELLED';
-
-  const handleCancelOrder = () => {
-    setShowCancelDialog(false);
-    // TODO: Dispatch cancelOrder action to Redux
-    navigation.goBack();
-  };
 
   const handleWebViewMessage = (event: any) => {
     try {
@@ -121,7 +121,7 @@ export default function OrderDetailScreen({ route, navigation }: OrderDetailScre
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
-      <Header title="Order Details" showBack onBackPress={() => navigation.goBack()} />
+      <Header title="Order Details" />
 
       {/* Map Section - Fixed at Top */}
       <View style={styles.mapSection}>
@@ -275,13 +275,13 @@ export default function OrderDetailScreen({ route, navigation }: OrderDetailScre
             <View style={styles.summaryRow}>
               <Text style={styles.summaryLabel}>Subtotal:</Text>
               <Text style={styles.summaryValue}>
-                ₹{Math.round(order.totalAmount * 0.9)}
+                ₹{Math.round(order.subtotal)}
               </Text>
             </View>
             <View style={styles.summaryRow}>
               <Text style={styles.summaryLabel}>Shipping:</Text>
               <Text style={styles.summaryValue}>
-                ₹{Math.round(order.totalAmount * 0.1)}
+                ₹{Math.round(order.deliveryCharges)}
               </Text>
             </View>
             <View style={[styles.summaryRow, styles.totalRow]}>
@@ -293,54 +293,26 @@ export default function OrderDetailScreen({ route, navigation }: OrderDetailScre
 
         {/* Action Buttons */}
         <View style={styles.actionButtons}>
-          {canCancelOrder && (
-            <Button
-              text="Cancel Order"
-              onPress={() => setShowCancelDialog(true)}
-              variant="danger"
-              size="large"
-              fullWidth
-            />
-          )}
           <Button
             text="Back to Orders"
-            onPress={() => navigation.goBack()}
-            variant="secondary"
+            onPress={() => navigation.navigate('OrdersMain')}
+            variant="primary"
             size="large"
             fullWidth
-            style={{ marginTop: 12 }}
           />
         </View>
       </ScrollView>
 
-      {/* Cancel Dialog */}
-      {showCancelDialog && (
-        <View style={styles.dialogOverlay}>
-          <View style={styles.dialogBox}>
-            <Text style={styles.dialogTitle}>Cancel Order?</Text>
-            <Text style={styles.dialogMessage}>
-              Are you sure you want to cancel this order? This action cannot be undone.
-            </Text>
-            <View style={styles.dialogButtons}>
-              <Button
-                text="No, Keep It"
-                onPress={() => setShowCancelDialog(false)}
-                variant="secondary"
-                size="medium"
-                fullWidth
-              />
-              <Button
-                text="Yes, Cancel"
-                onPress={handleCancelOrder}
-                variant="danger"
-                size="medium"
-                fullWidth
-                style={{ marginTop: 12 }}
-              />
-            </View>
-          </View>
-        </View>
-      )}
+      <OrderSuccessModal
+        visible={showSuccess}
+        orderId={order.id}
+        totalAmount={order.totalAmount}
+        onTrackOrder={() => setShowSuccess(false)}
+        onContinueShopping={() => {
+          setShowSuccess(false);
+          navigation.navigate('Home', { screen: 'HomeMain' });
+        }}
+      />
     </SafeAreaView>
   );
 }

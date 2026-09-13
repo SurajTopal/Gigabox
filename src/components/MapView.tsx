@@ -41,7 +41,7 @@ export default function MapView({
       <style>
         * { margin: 0; padding: 0; }
         html, body { height: 100%; width: 100%; }
-        .map-wrap { position: relative; width: 100%; height: calc(100% - 70px); }
+        .map-wrap { position: relative; width: 100%; height: calc(100% - 86px); }
         #map { width: 100%; height: 100%; }
         .progress-pill {
           position: absolute;
@@ -59,33 +59,55 @@ export default function MapView({
           z-index: 5;
         }
         .legend {
-          padding: 12px 16px;
+          height: 86px;
+          padding: 12px 14px;
           background: white;
-          font-size: 13px;
           border-top: 1px solid #e5e7eb;
           box-sizing: border-box;
           display: flex;
-          gap: 20px;
+          align-items: center;
+          gap: 12px;
         }
-        .location {
+        .stops {
+          flex: 1;
+          min-width: 0;
+        }
+        .stop {
           display: flex;
           align-items: center;
-          gap: 8px;
-          flex: 1;
+          gap: 10px;
         }
-        .marker {
-          width: 14px;
-          height: 14px;
+        .dot {
+          width: 11px;
+          height: 11px;
           border-radius: 50%;
           flex-shrink: 0;
         }
         .store { background: #667eea; }
         .delivery { background: #10b981; }
-        .route-info {
-          font-size: 12px;
-          color: #667eea;
+        .connector {
+          width: 2px;
+          height: 14px;
+          margin-left: 4.5px;
+          background: repeating-linear-gradient(
+            to bottom, #d1d5db 0 3px, transparent 3px 6px
+          );
+        }
+        .stop-name {
+          font-size: 13px;
           font-weight: 600;
-          margin-top: 6px;
+          color: #111827;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+        .route-info {
+          flex-shrink: 0;
+          text-align: right;
+          font-size: 12px;
+          font-weight: 700;
+          color: #667eea;
+          line-height: 1.5;
         }
       </style>
     </head>
@@ -95,15 +117,18 @@ export default function MapView({
         <div class="progress-pill">🚲 Starting…</div>
       </div>
       <div class="legend">
-        <div class="location">
-          <div class="marker store"></div>
-          <span><strong>Store:</strong> ${storeAddress}</span>
+        <div class="stops">
+          <div class="stop">
+            <div class="dot store"></div>
+            <div class="stop-name">${storeAddress}</div>
+          </div>
+          <div class="connector"></div>
+          <div class="stop">
+            <div class="dot delivery"></div>
+            <div class="stop-name">${deliveryAddress}</div>
+          </div>
         </div>
-        <div class="location">
-          <div class="marker delivery"></div>
-          <span><strong>Delivery:</strong> ${deliveryAddress}</span>
-        </div>
-        <div class="route-info">Loading route...</div>
+        <div class="route-info">Loading…</div>
       </div>
       <script>
         const PHASE = '${phase}';
@@ -151,7 +176,7 @@ export default function MapView({
           position: storeLocation,
           map: map,
           title: '${storeAddress}',
-          icon: 'http://maps.google.com/mapfiles/ms/icons/blue-dot.png'
+          icon: 'https://maps.google.com/mapfiles/ms/icons/blue-dot.png'
         });
 
         // Delivery marker
@@ -159,7 +184,7 @@ export default function MapView({
           position: deliveryLocation,
           map: map,
           title: '${deliveryAddress}',
-          icon: 'http://maps.google.com/mapfiles/ms/icons/green-dot.png'
+          icon: 'https://maps.google.com/mapfiles/ms/icons/green-dot.png'
         });
 
         // Directions Service for real route
@@ -175,20 +200,26 @@ export default function MapView({
         });
 
         // Bike marker with custom icon
+        // A yellow disc as the backing plate, with the scooter drawn on top as the
+        // marker's label — a bare SymbolPath only ever renders as a dot.
         const bikeIcon = {
           path: google.maps.SymbolPath.CIRCLE,
-          scale: 8,
+          scale: 14,
           fillColor: '#FCD34D',
           fillOpacity: 1,
           strokeColor: '#FFFFFF',
-          strokeWeight: 2
+          strokeWeight: 3
         };
 
         const bikeMarker = new google.maps.Marker({
           position: storeLocation,
           map: map,
-          title: 'Delivery Bike 🚲',
+          title: 'Delivery Bike',
           icon: bikeIcon,
+          label: {
+            text: '🛵',
+            fontSize: '16px'
+          },
           zIndex: google.maps.Marker.MAX_ZINDEX + 1
         });
 
@@ -208,10 +239,26 @@ export default function MapView({
             : (meters / 1000).toFixed(1) + ' km';
         }
 
+        // The single source for how long the ride takes. Both the ETA label and
+        // the animation read this, so they can't quote different numbers.
+        function rideTimeMs(meters) {
+          return (meters / 1000 / BIKE_SPEED_KMH) * 3600 * 1000;
+        }
+
+        function formatDuration(ms) {
+          const seconds = Math.round(ms / 1000);
+          if (seconds < 60) {
+            return seconds + ' sec';
+          }
+          const minutes = Math.floor(seconds / 60);
+          const rest = seconds % 60;
+          return rest ? minutes + ' min ' + rest + ' sec' : minutes + ' min';
+        }
+
         let polylinePoints = [];
         let bikeProgress = 0;
         let totalDistance = 0; // in meters
-        const BIKE_SPEED_KMH = 200;
+        const BIKE_SPEED_KMH = 60;
         const UPDATE_INTERVAL = 200; // Update every 200ms for smooth motion
 
         // Function to decode polyline (Google's algorithm)
@@ -276,12 +323,14 @@ export default function MapView({
               const route = result.routes[0];
               const distance = route.legs[0].distance.text;
               const distanceMeters = route.legs[0].distance.value;
-              const duration = route.legs[0].duration.text;
 
-              // Update legend with route info
+              // ETA is derived from the route distance and the bike's speed, not
+              // from Google's traffic estimate — otherwise the label and the
+              // animation describe the same trip with different numbers.
               const infoEl = document.querySelector('.route-info');
               if (infoEl) {
-                infoEl.innerText = '📍 ' + distance + ' • ' + duration;
+                infoEl.innerHTML =
+                  distance + '<br>' + formatDuration(rideTimeMs(distanceMeters));
               }
 
               // Extract waypoints from polyline (follows actual road)
@@ -323,7 +372,7 @@ export default function MapView({
               } else if (waypoints.length > 1) {
                 // Calculate total time in milliseconds
                 totalDistance = distanceMeters;
-                const totalTimeMs = (totalDistance / 1000 / BIKE_SPEED_KMH) * 3600 * 1000;
+                const totalTimeMs = rideTimeMs(totalDistance);
 
                 console.log('Total time:', totalTimeMs / 1000, 'seconds');
 
