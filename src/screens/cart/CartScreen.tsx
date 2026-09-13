@@ -5,6 +5,7 @@ import Header from '../../components/Header';
 import Button from '../../components/Button';
 import { useAppSelector, useAppDispatch } from '../../store';
 import { removeFromCart, updateQuantity } from '../../store/slices/cartSlice';
+import { getDeliveryCharge, getOrderTotal } from '../../utils/price';
 import { styles } from './CartScreen.styles';
 
 interface CartScreenProps {
@@ -49,13 +50,8 @@ export default function CartScreen({ navigation }: CartScreenProps) {
   const cartItems = useAppSelector(state => state.cart.items);
   const totalAmount = useAppSelector(state => state.cart.totalAmount);
 
-  const deliveryCharges = () => {
-    if (totalAmount > 99) {
-      return 0;
-    } else {
-      return 40;
-    }
-  }
+  const deliveryCharges = getDeliveryCharge(totalAmount);
+  const orderTotal = getOrderTotal(totalAmount);
 
   const handleRemove = useCallback(
     (itemId: number) => {
@@ -103,12 +99,12 @@ export default function CartScreen({ navigation }: CartScreenProps) {
 
             <View style={styles.summaryRow}>
               <Text style={styles.summaryLabel}>Delivery Charges :</Text>
-              <Text style={styles.summaryValue}>₹{deliveryCharges()}</Text>
+              <Text style={styles.summaryValue}>₹{deliveryCharges}</Text>
             </View>
 
             <View style={[styles.summaryRow, styles.totalRow]}>
               <Text style={styles.totalLabel}>Total:</Text>
-              <Text style={styles.totalValue}>₹{Math.round(totalAmount)}</Text>
+              <Text style={styles.totalValue}>₹{Math.round(orderTotal)}</Text>
             </View>
 
             <Button

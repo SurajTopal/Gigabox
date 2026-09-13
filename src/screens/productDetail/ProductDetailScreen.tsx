@@ -1,11 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
 import Header from '../../components/Header';
-import { useProducts } from '../../hooks/useProducts';
+import { useProductDetails } from '../../hooks/useProducts';
 import { useAppDispatch } from '../../store';
 import { addToCart } from '../../store/slices/cartSlice';
+import { getDiscountedPrice } from '../../utils/price';
 import { styles } from './ProductDetailScreen.styles';
 
 interface ProductDetailScreenProps {
@@ -16,12 +17,8 @@ interface ProductDetailScreenProps {
 export default function ProductDetailScreen({ route, navigation }: ProductDetailScreenProps) {
   const dispatch = useAppDispatch();
   const { productId } = route.params;
-  const { selectedProduct, loading, error, loadProductDetails } = useProducts();
+  const { selectedProduct, loading, error } = useProductDetails(productId);
   const [quantity, setQuantity] = useState(1);
-
-  useEffect(() => {
-    loadProductDetails(productId);
-  }, [productId, loadProductDetails]);
 
   const handleAddToCart = () => {
     if (selectedProduct) {
@@ -29,7 +26,10 @@ export default function ProductDetailScreen({ route, navigation }: ProductDetail
         addToCart({
           id: selectedProduct.id.toString(),
           name: selectedProduct.title,
-          price: selectedProduct.price,
+          price: getDiscountedPrice(
+            selectedProduct.price,
+            selectedProduct.discountPercentage,
+          ),
           quantity,
         }),
       );
@@ -60,7 +60,10 @@ export default function ProductDetailScreen({ route, navigation }: ProductDetail
   }
 
   const product = selectedProduct;
-  const discountedPrice = Math.round(product.price * (1 - product.discountPercentage / 100));
+  const discountedPrice = getDiscountedPrice(
+    product.price,
+    product.discountPercentage,
+  );
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>

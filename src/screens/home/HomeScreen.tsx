@@ -8,6 +8,7 @@ import Header from '../../components/Header';
 import { useProducts } from '../../hooks/useProducts';
 import { useAppDispatch } from '../../store';
 import { addToCart } from '../../store/slices/cartSlice';
+import { getDiscountedPrice } from '../../utils/price';
 import { styles } from './HomeScreen.styles';
 
 interface ProductCardProps {
@@ -28,7 +29,7 @@ const ProductCard = React.memo(
     const inStock = stock > 0;
     const [imageError, setImageError] = useState(false);
     const [quantity, setQuantity] = useState(1);
-    const discountedPrice = Math.round(price * (1 - discountPercentage / 100));
+    const discountedPrice = getDiscountedPrice(price, discountPercentage);
 
     // FlashList recycles this instance across products, so per-item state has to
     // be reset when the view is handed a different product.
@@ -58,7 +59,7 @@ const ProductCard = React.memo(
     };
 
     const handleAddToCart = () => {
-      onAddToCart(id, title, price, quantity);
+      onAddToCart(id, title, discountedPrice, quantity);
     };
 
     return (

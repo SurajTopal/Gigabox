@@ -227,6 +227,9 @@ const productSlice = createSlice({
       .addCase(fetchProductById.pending, (state) => {
         state.loading = true;
         state.error = null;
+        // Otherwise the detail screen keeps rendering the previous product while
+        // the new one loads — and "Add to Cart" would add the wrong item.
+        state.selectedProduct = null;
       })
       .addCase(fetchProductById.fulfilled, (state, action) => {
         state.loading = false;

@@ -11,6 +11,22 @@ import {
   setCurrentPage,
 } from '../store/slices/productSlice';
 
+// Deliberately separate from useProducts: that hook fetches page 0 of the whole
+// catalog on mount, which replaces the list a screen may already have paginated.
+// A detail screen only ever needs one product.
+export const useProductDetails = (productId: number) => {
+  const dispatch = useAppDispatch();
+  const { selectedProduct, loading, error } = useAppSelector(
+    state => state.products,
+  );
+
+  useEffect(() => {
+    dispatch(fetchProductById(productId));
+  }, [dispatch, productId]);
+
+  return { selectedProduct, loading, error };
+};
+
 export const useProducts = () => {
   const dispatch = useAppDispatch();
   const {
@@ -21,6 +37,7 @@ export const useProducts = () => {
     searchResults,
     searchQuery,
     currentPage,
+    totalProducts,
     loading,
     searching,
     error,
@@ -63,11 +80,14 @@ export const useProducts = () => {
   );
 
   // Load more products (pagination)
+  const hasMore = products.length < totalProducts;
+
   const loadMore = useCallback(() => {
+    if (!hasMore) return;
     const nextPage = currentPage + 1;
     dispatch(setCurrentPage(nextPage));
     dispatch(fetchProducts({ page: nextPage, limit: 30 }));
-  }, [dispatch, currentPage]);
+  }, [dispatch, currentPage, hasMore]);
 
   // Reload products
   const reload = useCallback(() => {
