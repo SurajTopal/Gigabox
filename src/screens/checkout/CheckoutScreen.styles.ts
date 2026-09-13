@@ -56,6 +56,40 @@ export const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: COLORS.primary,
   },
+  itemsBox: {
+    backgroundColor: 'white',
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    elevation: 1,
+  },
+  itemRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+  },
+  itemRowDivider: {
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
+  },
+  itemInfo: {
+    flex: 1,
+    marginRight: 12,
+  },
+  itemName: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: COLORS.text,
+    marginBottom: 3,
+  },
+  itemMeta: {
+    fontSize: 12,
+    color: '#6b7280',
+  },
+  itemTotal: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: COLORS.primary,
+  },
   deliverToCard: {
     backgroundColor: 'white',
     borderRadius: 10,
